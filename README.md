@@ -58,7 +58,8 @@ python train_initial_model.py
 
 After we get the initial model,  it can be performed on control EEG dataset and get thousands of hard negative samples. Run the following command to perform the model on control EEG and get the predictions of EEG.
 
-```python continurous.py
+```
+python continurous.py
 ```
 
 
