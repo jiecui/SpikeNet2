@@ -15,7 +15,6 @@ from sleeplib.Resnet_15.model import ResNet
 from sleeplib.datasets import BonoboDataset, ContinousToSnippetDataset
 # this holds all the configuration parameters
 from sleeplib.config import Config
-import pickle
 
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
