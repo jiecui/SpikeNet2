@@ -5,6 +5,7 @@
 *.ckpt
 *.old
 *.pyc
+__pycache__/
 *.png
 .DS_Store
 .ipynb_checkpoints
@@ -39,4 +40,4 @@ Thumbs.db
 # project related
 *.code-workspace
 *.code-profile
-.pytorch/*
+.pytorch/
