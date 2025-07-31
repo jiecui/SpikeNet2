@@ -21,7 +21,7 @@ import sys
 sys.path.append("../")
 
 # define model name and path
-model_path = "your_path/Models/spikenet2"  # TODO: change to your path
+model_path = "H:\\Documents\\Richard\\Projects\\rochester\\mayo_clinic\\subq_ml\\analysis\\data\\spikenet2\\models"
 # load config and show all default parameters
 config = Config()
 config.print_config()
@@ -85,8 +85,8 @@ model = ResNet(
 )
 
 # create a logger
-wandb.init(dir="logging")
-wandb_logger = WandbLogger(project="super_awesome_project")
+wandb.init(dir="logging") # potential conflict between drive letters and UNC paths
+wandb_logger = WandbLogger(project="spikenet2_project")
 
 # create callbacks with early stopping and model checkpoint (saves the best model)
 callbacks = [
