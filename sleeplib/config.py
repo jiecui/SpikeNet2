@@ -7,9 +7,13 @@ from dataclasses import dataclass
 class Config:
 
     # Data params
-    PATH_FILES_BONOBO: str = "your_path"  #'
+    PATH_FILES_BONOBO: str = (
+        "H:\\Documents\\Richard\\Datasets\\spikenet2_datasets\\Events\\hardmine"  #'
+    )
     PATH_LUT_BONOBO: str = "lut_labelled_20230628.csv"  # data table
-    PATH_CONTINOUS_EEG: str = "your_path/continuousEEG"
+    PATH_CONTINOUS_EEG: str = (
+        "H:\\Documents\\Richard\\Datasets\\spikenet2_datasets\\EEG\\hm_negative_eeg"
+    )
 
     FQ: int = 128  # Hz
 
