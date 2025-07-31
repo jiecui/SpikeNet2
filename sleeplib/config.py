@@ -14,8 +14,8 @@ class Config:
     
     
     # Preprocessing 
-    MONTAGE: str = 'conbine'
-    WINDOWSIZE: float = 1 # 2 seconds
+    MONTAGE: str = 'combine'
+    WINDOWSIZE: float = 1 # 2 seconds (cut length of EEG signals)
     
 	# Model parameters
     N_CHANNELS: int = 37 #19+18
