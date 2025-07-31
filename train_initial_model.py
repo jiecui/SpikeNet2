@@ -1,3 +1,9 @@
+# this holds all the configuration parameters
+from sleeplib.config import Config
+from sleeplib.transforms import cut_and_jitter, channel_flip, extremes_remover
+from sleeplib.montages import CDAC_combine_montage
+from sleeplib.datasets import BonoboDataset
+from sleeplib.Resnet_15.model import ResNet
 import pandas as pd
 import wandb
 import os
@@ -13,16 +19,9 @@ from torchvision import transforms
 import sys
 
 sys.path.append("../")
-from sleeplib.Resnet_15.model import ResNet
-from sleeplib.datasets import BonoboDataset
-from sleeplib.montages import CDAC_combine_montage
-from sleeplib.transforms import cut_and_jitter, channel_flip, extremes_remover
-
-# this holds all the configuration parameters
-from sleeplib.config import Config
 
 # define model name and path
-model_path = "your_path/Models/spikenet2"
+model_path = "your_path/Models/spikenet2"  # TODO: change to your path
 # load config and show all default parameters
 config = Config()
 config.print_config()
@@ -53,25 +52,30 @@ train_df = sub_df[sub_df["Mode"] == "Train"]
 val_df = sub_df[sub_df["Mode"] == "Val"]
 
 # set up dataloaders
-
-
 Bonobo_train = BonoboDataset(
     train_df,
     config.PATH_FILES_BONOBO,
     transform=transform_train,
     montage=combine_montage,
 )
+
 train_dataloader = DataLoader(
-    Bonobo_train, batch_size=config.BATCH_SIZE, shuffle=True, num_workers=os.cpu_count()
+    Bonobo_train,
+    batch_size=config.BATCH_SIZE,
+    shuffle=True,
+    num_workers=os.cpu_count() or 0,
 )
 
 Bonobo_val = BonoboDataset(
     val_df, config.PATH_FILES_BONOBO, transform=transform_val, montage=combine_montage
 )
-val_dataloader = DataLoader(
-    Bonobo_val, batch_size=config.BATCH_SIZE, shuffle=False, num_workers=os.cpu_count()
-)
 
+val_dataloader = DataLoader(
+    Bonobo_val,
+    batch_size=config.BATCH_SIZE,
+    shuffle=False,
+    num_workers=os.cpu_count() or 0,
+)
 
 # build model
 model = ResNet(
@@ -102,3 +106,5 @@ trainer = pl.Trainer(
 # train the model
 trainer.fit(model, train_dataloader, val_dataloader)
 wandb.finish()
+
+# [EOF]
