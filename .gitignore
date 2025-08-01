@@ -42,3 +42,4 @@ Thumbs.db
 *.code-profile
 .pytorch/
 logging/
+lightning_logs/
