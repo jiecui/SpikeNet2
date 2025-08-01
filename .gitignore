@@ -41,3 +41,4 @@ Thumbs.db
 *.code-workspace
 *.code-profile
 .pytorch/
+logging/
