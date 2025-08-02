@@ -5,7 +5,7 @@ from sleeplib.montages import CDAC_combine_montage
 from sleeplib.datasets import BonoboDataset
 from sleeplib.Resnet_15.model import ResNet
 import pandas as pd
-# import wandb
+import wandb
 import os
 
 import pytorch_lightning as pl
@@ -21,7 +21,7 @@ import sys
 sys.path.append("../")
 
 # define model name and path
-model_path = "H:\\Documents\\Richard\\Projects\\rochester\\mayo_clinic\\subq_ml\\analysis\\data\\spikenet2\\models"
+model_path = "/mnt/Hydrogen/richard/Documents/Richard/Datasets/spikenet2/models"
 # load config and show all default parameters
 config = Config()
 config.print_config()
@@ -85,8 +85,8 @@ model = ResNet(
 )
 
 # create a logger
-# wandb.init(dir="logging") # potential conflict between drive letters and UNC paths
-# wandb_logger = WandbLogger(project="spikenet2_project")
+wandb.init(dir="logging")  # potential conflict between drive letters and UNC paths
+wandb_logger = WandbLogger(project="spikenet2_project", name="spikenet2_run")
 
 # create callbacks with early stopping and model checkpoint (saves the best model)
 callbacks = [
@@ -99,12 +99,12 @@ trainer = pl.Trainer(
     accelerator="gpu",
     min_epochs=5,
     max_epochs=100,
-    # logger=wandb_logger,
+    logger=wandb_logger,
     callbacks=callbacks,
     fast_dev_run=False,
 )
 # train the model
 trainer.fit(model, train_dataloader, val_dataloader)
-# wandb.finish()
+wandb.finish()
 
 # [EOF]
