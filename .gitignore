@@ -43,3 +43,4 @@ Thumbs.db
 .pytorch/
 logging/
 lightning_logs/
+wandb/
