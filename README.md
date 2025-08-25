@@ -28,7 +28,7 @@ pip install -r requirements.txt
 
 ## Data 
 
-[Spikenet-2](https://bdsp.io/content/spikenet/2.0/)
+You can find the data here:  [Spikenet-2](https://bdsp.io/content/spikenet/2.0/)
 
 ## Preparation
 
