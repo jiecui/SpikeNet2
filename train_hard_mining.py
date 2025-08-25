@@ -60,7 +60,7 @@ val_df = sub_df[sub_df['Mode']=='Val']
 # set up dataloaders
 
 
-Bonobo_train = BonoboDataset(train_df, 
+Bonobo_train = Hardmine_BonoboDataset(train_df, 
                              config.PATH_FILES_BONOBO, 
                              transform = transform_train_pos,
                              transform_pos=transform_train_pos,
@@ -95,7 +95,7 @@ for i in range(1):
     # create callbacks with early stopping and model checkpoint (saves the best model)
     callbacks = [EarlyStopping(monitor='val_loss',patience=5),ModelCheckpoint(dirpath=model_path, filename='without_HM_1sec', monitor='val_loss')]
     # create trainer, use fast dev run to test the code
-    trainer = pl.Trainer(devices=[1],accelerator="gpu", min_epochs=10,max_epochs=100,logger=wandb_logger,callbacks=callbacks,fast_dev_run=False)
+    trainer = pl.Trainer(devices=[1],accelerator="gpu", min_epochs=30,max_epochs=100,logger=wandb_logger,callbacks=callbacks,fast_dev_run=False)
     # train the model
     trainer.fit(model,train_dataloader,val_dataloader)
     wandb.finish()
