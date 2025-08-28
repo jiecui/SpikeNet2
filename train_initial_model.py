@@ -94,15 +94,7 @@ callbacks = [
     ModelCheckpoint(dirpath=model_path, filename="weights", monitor="val_loss"),
 ]
 # create trainer, use fast dev run to test the code
-trainer = pl.Trainer(
-    devices=1,
-    accelerator="gpu",
-    min_epochs=5,
-    max_epochs=100,
-    logger=wandb_logger,
-    callbacks=callbacks,
-    fast_dev_run=False,
-)
+trainer = pl.Trainer(devices=1, accelerator="gpu", min_epochs=30,max_epochs=100,logger=wandb_logger,callbacks=callbacks,fast_dev_run=False)
 # train the model
 trainer.fit(model, train_dataloader, val_dataloader)
 wandb.finish()
