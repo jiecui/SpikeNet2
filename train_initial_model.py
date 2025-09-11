@@ -1,12 +1,12 @@
 # this holds all the configuration parameters
+import wandb
+import os
 from sleeplib.config import Config
 from sleeplib.transforms import cut_and_jitter, channel_flip, extremes_remover
 from sleeplib.montages import CDAC_combine_montage
 from sleeplib.datasets import BonoboDataset
 from sleeplib.Resnet_15.model import ResNet
 import pandas as pd
-import wandb
-import os
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
