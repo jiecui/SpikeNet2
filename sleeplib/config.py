@@ -8,11 +8,15 @@ class Config:
 
     # Data params
     # 'your_path' is the path of your project
-    PATH_FILES_BONOBO: str = "your_path/Events/real/"  # real_npy?
-    PATH_LUT_BONOBO: str = (
-        "your_path/lut_labelled_20230628.csv"  #'lut_labelled_20230628.csv'
+    PATH_FILES_BONOBO: str = (
+        "H:\\Documents\\Richard\\Datasets\\spikenet2_datasets\\Events\\real_npy"  # real_npy?
     )
-    PATH_CONTINOUS_EEG: str = "your_path/EEG/hm_negative_eeg/"
+    PATH_LUT_BONOBO: str = (
+        "H:\\Documents\\Richard\\ComputationalToolbox\\neurophysiology_signals_analysis\\spikenet2\\lut_labelled_20230628.csv"  #'lut_labelled_20230628.csv'
+    )
+    PATH_CONTINOUS_EEG: str = (
+        "H:\\Documents\\Richard\\Datasets\\spikenet2_datasets\\EEG\\hm_negative_eeg"
+    )
 
     FQ: int = 128  # Hz
 
