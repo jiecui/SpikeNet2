@@ -24,8 +24,8 @@ from sleeplib.montages import (
     # CDAC_bipolar_montage,
     # CDAC_common_average_montage,
     # CDAC_combine_montage,
-    con_combine_montage,
-    # con_ECG_combine_montage,
+    # con_combine_montage,
+    con_ECG_combine_montage,
 )
 from sleeplib.transforms import extremes_remover
 from spikenet2_lib import get_output_root, get_proj_root, get_database_root
@@ -40,7 +40,7 @@ path_model = os.path.join(get_output_root(), "models")
 
 # set up dataloader to predict all samples in test dataset
 transform_train = transforms.Compose([extremes_remover(signal_max=2000, signal_min=20)])
-# con_combine_montage = con_ECG_combine_montage()
+con_combine_montage = con_ECG_combine_montage()
 
 
 # load pretrained model
