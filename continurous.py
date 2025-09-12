@@ -64,7 +64,9 @@ i = 0
 # controls = controls[controls['Mode']=='Test']
 for eeg_file in tqdm(controls.EEG_index):
     # path = "your_path/continuousEEG/" + eeg_file + ".mat"
-    path = os.path.join(get_database_root(), "hm_negative_eeg", eeg_file + ".mat")
+    path = os.path.join(
+        get_database_root(), "EEG", "hm_negative_eeg", eeg_file + ".mat"
+    )
     Bonobo_con = ContinousToSnippetDataset(
         path,
         montage=con_combine_montage,
