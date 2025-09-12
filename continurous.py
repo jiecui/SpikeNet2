@@ -11,6 +11,7 @@
 # imports
 import os
 import sys
+import logging
 import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
@@ -30,6 +31,8 @@ from sleeplib.montages import (
 from sleeplib.transforms import extremes_remover
 from spikenet2_lib import get_output_root, get_proj_root, get_database_root
 
+# set global logging level
+logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
 # load own code
 sys.path.append("../")
 
@@ -68,17 +71,20 @@ i = 0
 # controls = controls[controls['Mode']=='Test']
 for eeg_file in tqdm(controls.EEG_index):
     # path = "your_path/continuousEEG/" + eeg_file + ".mat"
-    path = os.path.join(
+    path_eeg = os.path.join(
         get_database_root(), "EEG", "hm_negative_eeg", eeg_file + ".mat"
     )
     Bonobo_con = ContinousToSnippetDataset(
-        path,
+        path_eeg,
         montage=con_combine_montage,
         transform=transform_train,
         window_size=config.WINDOWSIZE,
     )
     con_dataloader = DataLoader(
-        Bonobo_con, batch_size=128, shuffle=False, num_workers=os.cpu_count()
+        Bonobo_con,
+        batch_size=128,
+        shuffle=False,
+        num_workers=os.cpu_count() or 0,
     )
 
     preds = trainer.predict(model, con_dataloader)
