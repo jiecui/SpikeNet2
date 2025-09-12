@@ -28,7 +28,7 @@ from sleeplib.montages import (
     con_ECG_combine_montage,
 )
 from sleeplib.transforms import extremes_remover
-from spikenet2_lib import get_output_root, get_proj_root
+from spikenet2_lib import get_output_root, get_proj_root, get_database_root
 
 # load own code
 sys.path.append("../")
@@ -63,7 +63,8 @@ controls = pd.read_csv(path_controls)
 i = 0
 # controls = controls[controls['Mode']=='Test']
 for eeg_file in tqdm(controls.EEG_index):
-    path = "your_path/continuousEEG/" + eeg_file + ".mat"
+    # path = "your_path/continuousEEG/" + eeg_file + ".mat"
+    path = os.path.join(get_database_root(), "hm_negative_eeg", eeg_file + ".mat")
     Bonobo_con = ContinousToSnippetDataset(
         path,
         montage=con_combine_montage,
