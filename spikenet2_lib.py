@@ -60,7 +60,7 @@ def get_output_root():
             "Hydrogen",
             "richard",
             "Documents",
-            "Rrichard",
+            "Richard",
             "Datasets",
             "spikenet2_datasets",
         )
