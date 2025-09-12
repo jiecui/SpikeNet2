@@ -1,40 +1,46 @@
-from torch.utils.data import DataLoader
+# get predictions on control EEG
+
+# 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
+# $Revision: 0.1 $  $Date: Fri 09/12/2025 04:16:14.055411 PM $
+#
+# Mayo Clinic Foundation
+# Rochester, MN 55901, USA
+#
+# Email: Cui.Jie@mayo.edu
+
+# imports
+import os
+import sys
 import numpy as np
 import pandas as pd
-import os
-import pickle
-from torchvision import transforms
+
+# import pickle
 import pytorch_lightning as pl
-import torch
-from tqdm import tqdm
 
-# load own code
-import sys
-
-sys.path.append("../")
-from sleeplib.Resnet_15.model import ResNet
-from sleeplib.datasets import BonoboDataset, ContinousToSnippetDataset
-
-# this holds all the configuration parameters
-from sleeplib.config import Config
-
-from pytorch_lightning.callbacks import ModelCheckpoint
-from torch.utils.data import DataLoader
+# import torch
 from torchvision import transforms
-
-from sleeplib.datasets import BonoboDataset, ContinousToSnippetDataset
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+from sleeplib.Resnet_15.model import ResNet
+from sleeplib.datasets import ContinousToSnippetDataset
+from sleeplib.config import Config
 from sleeplib.montages import (
-    CDAC_bipolar_montage,
-    CDAC_common_average_montage,
-    CDAC_combine_montage,
-    con_combine_montage,
+    # CDAC_bipolar_montage,
+    # CDAC_common_average_montage,
+    # CDAC_combine_montage,
+    # con_combine_montage,
     con_ECG_combine_montage,
 )
-from sleeplib.transforms import cut_and_jitter, channel_flip, extremes_remover
+from sleeplib.transforms import extremes_remover
+from spikenet2_lib import get_output_root, get_proj_root
 
+# load own code
+sys.path.append("../")
+
+# this holds all the configuration parameters
 # load config and show all default parameters
 config = Config()
-path_model = "your_path/Models/spikenet2/"
+path_model = os.path.join(get_output_root(), "models")
 
 # set up dataloader to predict all samples in test dataset
 transform_train = transforms.Compose([extremes_remover(signal_max=2000, signal_min=20)])
@@ -43,7 +49,8 @@ con_combine_montage = con_ECG_combine_montage()
 
 # load pretrained model
 model = ResNet.load_from_checkpoint(
-    "your_path/Models/spikenet2/hardmine.ckpt",
+    # "your_path/Models/spikenet2/hardmine.ckpt",
+    os.path.join(path_model, "hardmine.ckpt"),
     lr=config.LR,
     n_channels=37,
 )
@@ -54,7 +61,7 @@ trainer = pl.Trainer(
 )
 
 # store results
-path_controls = os.path.join("your_path/Models/spikenet2/controlset.csv")
+path_controls = os.path.join(get_proj_root(), "controlset.csv")
 
 controls = pd.read_csv(path_controls)
 i = 0
