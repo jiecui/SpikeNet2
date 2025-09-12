@@ -39,7 +39,9 @@ sys.path.append("../")
 # this holds all the configuration parameters
 # load config and show all default parameters
 config = Config()
-path_model = os.path.join(get_output_root(), "models", "checkpoint")
+path_model = os.path.join(get_output_root(), "models")
+path_hdmin = os.path.join(get_output_root(), "models", "hard_mine")
+path_chkpt = os.path.join(get_output_root(), "models", "checkpoint")
 
 # set up dataloader to predict all samples in test dataset
 transform_train = transforms.Compose([extremes_remover(signal_max=2000, signal_min=20)])
@@ -50,7 +52,7 @@ con_combine_montage = con_combine_montage()
 # load pretrained model
 model = ResNet.load_from_checkpoint(
     # "your_path/Models/spikenet2/hardmine.ckpt",
-    os.path.join(path_model, "hardmine.ckpt"),
+    os.path.join(path_chkpt, "hardmine.ckpt"),
     lr=config.LR,
     n_channels=37,
 )
@@ -62,13 +64,9 @@ trainer = pl.Trainer(
 
 # store results
 path_controls = os.path.join(get_proj_root(), "controlset.csv")
-# make dir if not exists
-path_hardmine = os.path.join(path_model, "hard_mine")
-os.makedirs(path_hardmine, exist_ok=True)
-
 controls = pd.read_csv(path_controls)
-i = 0
 # controls = controls[controls['Mode']=='Test']
+
 for eeg_file in tqdm(controls.EEG_index):
     # path = "your_path/continuousEEG/" + eeg_file + ".mat"
     path_eeg = os.path.join(
@@ -78,7 +76,7 @@ for eeg_file in tqdm(controls.EEG_index):
         path_eeg,
         montage=con_combine_montage,
         transform=transform_train,
-        window_size=config.WINDOWSIZE,
+        window_size=int(config.WINDOWSIZE),
     )
     con_dataloader = DataLoader(
         Bonobo_con,
@@ -94,6 +92,6 @@ for eeg_file in tqdm(controls.EEG_index):
     preds = preds.astype(float)
 
     preds = pd.DataFrame(preds)
-    preds.to_csv(os.path.join(path_hardmine, eeg_file + ".csv"), index=False)
+    preds.to_csv(os.path.join(path_hdmin, eeg_file + ".csv"), index=False)
 
 # [EOF]
