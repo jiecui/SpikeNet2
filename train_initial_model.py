@@ -1,27 +1,36 @@
-# this holds all the configuration parameters
+# Train initial model on bonobo dataset
+
+# 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
+# $Revision: 0.1 $  $Date: Fri 09/12/2025 04:16:14.055411 PM $
+#
+# Mayo Clinic Foundation
+# Rochester, MN 55901, USA
+#
+# Email: Cui.Jie@mayo.edu
+
+# import libraries
 import wandb
 import os
+import sys
+import pandas as pd
+import pytorch_lightning as pl
 from sleeplib.config import Config
 from sleeplib.transforms import cut_and_jitter, channel_flip, extremes_remover
 from sleeplib.montages import CDAC_combine_montage
 from sleeplib.datasets import BonoboDataset
 from sleeplib.Resnet_15.model import ResNet
-import pandas as pd
-
-import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 from torchvision import transforms
+from spikenet2_lib import get_output_root
 
 # load own code
-import sys
-
 sys.path.append("../")
 
 # define model name and path
-model_path = "/mnt/Hydrogen/richard/Documents/Richard/Datasets/spikenet2/models"
+model_path = os.path.join(get_output_root(), "models")
 # load config and show all default parameters
 config = Config()
 config.print_config()
@@ -77,13 +86,18 @@ val_dataloader = DataLoader(
     num_workers=os.cpu_count() or 0,
 )
 
+# ***********
 # build model
+# ***********
 model = ResNet(
     lr=config.LR,
     n_channels=config.N_CHANNELS,
     Focal_loss=True,  # True means loss function will be Focal loss. Otherwise will be BCE loss
 )
 
+# ***************
+# train the model
+# ***************
 # create a logger
 wandb.init(dir="logging")  # potential conflict between drive letters and UNC paths
 wandb_logger = WandbLogger(project="spikenet2_project", name="spikenet2_run")
@@ -103,7 +117,7 @@ trainer = pl.Trainer(
     callbacks=callbacks,
     fast_dev_run=False,
 )
-# train the model
+
 trainer.fit(model, train_dataloader, val_dataloader)
 wandb.finish()
 
