@@ -1,6 +1,16 @@
 # config.py
 
+# 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
+# $Revision: 0.1 $  $Date: Fri 09/12/2025 04:16:14.055411 PM $
+#
+# Mayo Clinic Foundation
+# Rochester, MN 55901, USA
+#
+# Email: Cui.Jie@mayo.edu
+
+import os
 from dataclasses import dataclass
+from spikenet2_lib import get_database_root, get_output_root
 
 
 @dataclass
@@ -8,14 +18,12 @@ class Config:
 
     # Data params
     # 'your_path' is the path of your project
-    PATH_FILES_BONOBO: str = (
-        "H:\\Documents\\Richard\\Datasets\\spikenet2_datasets\\Events\\real_npy"  # real_npy?
+    PATH_FILES_BONOBO: str = os.path.join(get_database_root(), "Events", "real_npy")
+    PATH_LUT_BONOBO: str = os.path.join(
+        get_database_root(), "lut_labelled_20230628.csv"
     )
-    PATH_LUT_BONOBO: str = (
-        "H:\\Documents\\Richard\\ComputationalToolbox\\neurophysiology_signals_analysis\\spikenet2\\lut_labelled_20230628.csv"  #'lut_labelled_20230628.csv'
-    )
-    PATH_CONTINOUS_EEG: str = (
-        "H:\\Documents\\Richard\\Datasets\\spikenet2_datasets\\EEG\\hm_negative_eeg"
+    PATH_CONTINOUS_EEG: str = os.path.join(
+        get_database_root(), "EEG", "hm_negative_eeg"
     )
 
     FQ: int = 128  # Hz
