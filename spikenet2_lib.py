@@ -42,7 +42,7 @@ def get_database_root():
         )
     elif host_name == "bnel-lambda1" or host_name == "bnel-lambda2":  # MSEL lab servers
         return os.path.join(
-            "/mnt", "eplab", "Personal", "Rrichard", "Datasets", "spikenet2_datasets"
+            "/mnt", "eplab", "Personal", "Richard", "Datasets", "spikenet2_datasets"
         )
     else:
         raise ValueError(f"Unknown host name {host_name} for database root.")
