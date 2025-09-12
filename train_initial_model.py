@@ -30,7 +30,8 @@ from spikenet2_lib import get_output_root
 sys.path.append("../")
 
 # define model name and path
-model_path = os.path.join(get_output_root(), "models")
+path_model = os.path.join(get_output_root(), "models", "checkpoint")
+os.makedirs(path_model, exist_ok=True)
 # load config and show all default parameters
 config = Config()
 config.print_config()
@@ -105,7 +106,7 @@ wandb_logger = WandbLogger(project="spikenet2_project", name="spikenet2_run")
 # create callbacks with early stopping and model checkpoint (saves the best model)
 callbacks = [
     EarlyStopping(monitor="val_loss", patience=5),
-    ModelCheckpoint(dirpath=model_path, filename="hardmine", monitor="val_loss"),
+    ModelCheckpoint(dirpath=path_model, filename="hardmine", monitor="val_loss"),
 ]
 # create trainer, use fast dev run to test the code
 trainer = pl.Trainer(
