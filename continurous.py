@@ -59,6 +59,9 @@ trainer = pl.Trainer(
 
 # store results
 path_controls = os.path.join(get_proj_root(), "controlset.csv")
+# make dir if not exists
+path_hardmine = os.path.join(path_model, "hard_mine")
+os.makedirs(path_hardmine, exist_ok=True)
 
 controls = pd.read_csv(path_controls)
 i = 0
@@ -85,6 +88,6 @@ for eeg_file in tqdm(controls.EEG_index):
     preds = preds.astype(float)
 
     preds = pd.DataFrame(preds)
-    preds.to_csv(path_model + "/hard_mine/" + eeg_file + ".csv", index=False)
+    preds.to_csv(os.path.join(path_hardmine, eeg_file + ".csv"), index=False)
 
 # [EOF]
