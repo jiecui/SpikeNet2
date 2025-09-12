@@ -1,8 +1,19 @@
+# Convert .mat files to .npy format
+
+# 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
+# $Revision: 0.1 $  $Date: Fri 09/12/2025 04:16:14.055411 PM $
+#
+# Mayo Clinic Foundation
+# Rochester, MN 55901, USA
+#
+# Email: Cui.Jie@mayo.edu
+
 # import libraries
 import os
 import glob
 import scipy.io as sio
 import numpy as np
+from spikenet2_lib import get_database_root, get_output_root
 
 
 # defined function to transfer data
@@ -39,12 +50,8 @@ def batch_convert_mat_to_npy(input_dir, output_dir=None):
 
 # main
 if __name__ == "__main__":
-    input_directory = (
-        "H:\\Documents\\Richard\\Datasets\\spikenet2_datasets\\Events\\real"
-    )
-    output_directory = (
-        "H:\\Documents\\Richard\\Datasets\\spikenet2_datasets\\Events\\real_npy"
-    )
+    input_directory = os.path.join(get_database_root(), "Events", "real")
+    output_directory = os.path.join(get_output_root(), "Events", "real_npy")
 
     batch_convert_mat_to_npy(input_directory, output_directory)
 
