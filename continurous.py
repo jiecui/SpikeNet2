@@ -24,7 +24,7 @@ from sleeplib.montages import (
     # CDAC_bipolar_montage,
     # CDAC_common_average_montage,
     # CDAC_combine_montage,
-    # con_combine_montage,
+    con_combine_montage,
     con_ECG_combine_montage,
 )
 from sleeplib.transforms import extremes_remover
