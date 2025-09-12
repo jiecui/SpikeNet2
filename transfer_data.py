@@ -34,7 +34,7 @@ def batch_convert_mat_to_npy(input_dir, output_dir=None):
     mat_files = glob.glob(os.path.join(input_dir, "*.mat"))
 
     success_count = 0
-    for mat_file in tqdm(mat_files, desc="Converting ", unit="file"):
+    for mat_file in tqdm(mat_files, desc=".mat --> .npy", unit="file"):
         try:
             data = sio.loadmat(mat_file)["data"]
 
