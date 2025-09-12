@@ -13,11 +13,7 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-
-# import pickle
 import pytorch_lightning as pl
-
-# import torch
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from tqdm import tqdm
