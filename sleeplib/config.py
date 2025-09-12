@@ -10,7 +10,7 @@
 
 import os
 from dataclasses import dataclass
-from spikenet2_lib import get_database_root, get_output_root
+from spikenet2_lib import get_database_root, get_output_root, get_proj_root
 
 
 @dataclass
@@ -18,10 +18,8 @@ class Config:
 
     # Data params
     # 'your_path' is the path of your project
-    PATH_FILES_BONOBO: str = os.path.join(get_database_root(), "Events", "real_npy")
-    PATH_LUT_BONOBO: str = os.path.join(
-        get_database_root(), "lut_labelled_20230628.csv"
-    )
+    PATH_FILES_BONOBO: str = os.path.join(get_output_root(), "Events", "real_npy")
+    PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "lut_labelled_20230628.csv")
     PATH_CONTINOUS_EEG: str = os.path.join(
         get_database_root(), "EEG", "hm_negative_eeg"
     )
