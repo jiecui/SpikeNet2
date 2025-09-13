@@ -36,7 +36,6 @@ def get_database_root():
             "richard",
             "Documents",
             "Richard",
-            "Documents",
             "Datasets",
             "spikenet2_datasets",
         )
