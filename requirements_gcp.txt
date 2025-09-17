@@ -1,0 +1,12 @@
+lightning
+mat73
+matplotlib
+numpy
+pandas
+pytorch_lightning
+scikit_learn
+scipy
+torch
+torchvision
+tqdm
+wandb
