@@ -91,7 +91,7 @@ controls = pd.read_csv(path_controls)
 train_controls = controls[controls["Mode"] == "Train"]
 # train_controls = controls
 
-for eeg_file in tqdm(train_controls.EEG_index):
+for eeg_file in tqdm(train_controls.EEG_index, desc="Hard Mining"):
     # df_path = "your_path/SpikeNet2/Models/SpikeNet2/con_hardmine/" + eeg_file + ".csv"
     df_path = os.path.join(get_output_root(), "models", "hard_mine", eeg_file + ".csv")
     # signal_path = "your_path/Bonobo_data/" + eeg_file + ".mat"
