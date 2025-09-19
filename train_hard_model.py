@@ -34,7 +34,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from sleeplib.config import Config
-from sleeplib.Resnet_15.model import FineTuning
+from sleeplib.Resnet_15.model import FineTuning, ResNet
 from sleeplib.datasets import (
     BonoboDataset,
     ContinousToSnippetDataset,
@@ -114,7 +114,10 @@ Bonobo_train = Hardmine_BonoboDataset(
     num_pos_augmentations=1,  # 2 3 4
 )
 train_dataloader = DataLoader(
-    Bonobo_train, batch_size=config.BATCH_SIZE, shuffle=True, num_workers=os.cpu_count() or 1
+    Bonobo_train,
+    batch_size=config.BATCH_SIZE,
+    shuffle=True,
+    num_workers=os.cpu_count() or 1,
 )
 
 Bonobo_val = BonoboDataset(
@@ -126,13 +129,21 @@ Bonobo_val = BonoboDataset(
     #  num_pos_augmentations = 1 #1
 )
 val_dataloader = DataLoader(
-    Bonobo_val, batch_size=config.BATCH_SIZE, shuffle=False, num_workers=os.cpu_count() or 1
+    Bonobo_val,
+    batch_size=config.BATCH_SIZE,
+    shuffle=False,
+    num_workers=os.cpu_count() or 1,
 )
 
 
 for i in range(1):
     # build model
-    model = FineTuning(lr=config.LR, n_channels=37, Focal_loss=False)  # False
+    # model = FineTuning(lr=config.LR, n_channels=37, Focal_loss=False)  # False
+    model = ResNet(
+        lr=config.LR,
+        n_channels=config.N_CHANNELS,
+        Focal_loss=False,  # True means loss function will be Focal loss. Otherwise will be BCE loss
+    )
 
     # create a logger
     wandb.init(dir="logging")
