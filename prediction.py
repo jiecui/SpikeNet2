@@ -113,7 +113,7 @@ trainer = pl.Trainer(
 
 # predict all samples
 preds = trainer.predict(model, test_dataloader)
-preds = np.concatenate(preds)  # preds = np.concatenate(preds)
+preds = np.concatenate(preds)  # seems OK
 
 # store results
 results = test_df[
@@ -122,3 +122,34 @@ results = test_df[
 results["preds"] = preds
 
 results.to_csv(path_model + "/predictions.csv", index=False)
+
+# auc
+df = pd.read_csv(path_model + "predictions.csv")
+
+# set up filters for datasets
+high_quality_filter = df["total_votes_received"] >= 2
+ultra_quality_filter = df["total_votes_received"] >= 8
+mode_filter = df["Mode"] == "Test"
+frac_filter = (df["fraction_of_yes"] >= 6 / 8) | (df["fraction_of_yes"] <= 2 / 8)
+
+# load samples as defined in spikenet paper
+AUC_df = df[ultra_quality_filter & mode_filter & frac_filter]
+
+labels = AUC_df.fraction_of_yes.values.round(0).astype(int)
+
+preds = AUC_df.preds
+# calculate ROC and AUC
+fpr, tpr, thresholds = roc_curve(labels, preds)
+roc_auc = auc(fpr, tpr)
+
+# plot ROC
+fig, ax = plt.subplots(figsize=(4, 4))
+ax.plot(fpr, tpr, label="ROC curve (AUC = %0.4f)" % roc_auc)
+ax.plot([0, 1], [0, 1], linestyle="--")
+ax.set_xlim([0, 1])
+ax.set_ylim([0, 1])
+ax.set_xlabel("False Positive Rate")
+ax.set_ylabel("True Positive Rate")
+ax.set_title("Receiver Operating Characteristic (ROC) Curve")
+ax.legend()
+fig.savefig(path_model + "ROC.png", dpi=300, bbox_inches="tight")
