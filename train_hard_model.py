@@ -123,8 +123,8 @@ train_dataloader = DataLoader(
 )
 
 Bonobo_val = BonoboDataset(
-    val_df,
-    config.PATH_FILES_BONOBO,
+    val_df, # config.PATH_FILES_BONOBO,
+    os.path.join(path_model, "hardmine_npy_round2"),
     transform=transform_val,
     montage=combine_montage,
     window_size=config.WINDOWSIZE,
