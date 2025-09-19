@@ -33,8 +33,7 @@ from torchvision import transforms
 
 # from pytorch_lightning.callbacks import modelcheckpoint
 from sleeplib.datasets import BonoboDataset
-
-# from sleeplib.resnet_15.model import resnet
+from sleeplib.Resnet_15.model import ResNet
 from sleeplib.transforms import cut_and_jitter, channel_flip, extremes_remover
 from sleeplib.config import Config
 from sleeplib.montages import (
@@ -44,6 +43,7 @@ from sleeplib.montages import (
     # con_combine_montage,
     # con_ECG_combine_montage,
 )
+from spikenet2_lib import get_output_root
 
 # load own code
 sys.path.append("../")
@@ -60,6 +60,7 @@ config.print_config()
 # load dataset
 # df = pd.read_csv("your_path.csv", sep=",")  # ; -> ,
 df = pd.read_csv(config.PATH_LUT_BONOBO, sep=";")  # ; -> ,
+path_chkpt = os.path.join(get_output_root(), "models", "checkpoint")
 
 # fraction filter
 frac_filter = (df["fraction_of_yes"] >= 6 / 8) | (df["fraction_of_yes"] <= 2 / 8)
@@ -72,7 +73,6 @@ test_df = df[mode_filter]
 AUC_df = df[extreme_quality_filter & mode_filter & frac_filter]
 spike_df = df[extreme_quality_filter & mode_filter & spike_filter]
 print(f"there are {len(AUC_df)} test samples")
-
 print(f"there are {len(spike_df)} spike")
 # set up dataloader to predict all samples in test dataset
 transform_val = transforms.Compose(
@@ -97,3 +97,15 @@ for x, y in test_dataloader:
     with torch.no_grad():
         print(x.shape)
         break
+
+# load pretrained model
+model = ResNet.load_from_checkpoint(
+    os.path.join(path_chkpt, "hardmine.ckpt"),
+    lr=config.LR,
+    n_channels=config.N_CHANNELS,
+)
+# map_location=torch.device('cpu') add this if running on CPU machine
+# init trainer
+trainer = pl.Trainer(
+    devices=1, accelerator="gpu", fast_dev_run=False, enable_progress_bar=False
+)
