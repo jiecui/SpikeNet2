@@ -118,7 +118,6 @@ trainer = pl.Trainer(
     fast_dev_run=False,
 )
 
-print(f"[DEBUG] len val_dataloader: {len(val_dataloader)}")
 trainer.fit(model, train_dataloader, val_dataloader)
 wandb.finish()
 
