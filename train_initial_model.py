@@ -35,7 +35,6 @@ os.makedirs(path_chkpt, exist_ok=True)
 # load config and show all default parameters
 config = Config()
 config.print_config()
-
 combine_montage = CDAC_combine_montage()
 
 # load dataset
@@ -106,7 +105,7 @@ wandb_logger = WandbLogger(project="spikenet2_project", name="spikenet2_run")
 # create callbacks with early stopping and model checkpoint (saves the best model)
 callbacks = [
     EarlyStopping(monitor="val_loss", patience=5),
-    ModelCheckpoint(dirpath=path_chkpt, filename="hardmine", monitor="val_loss"),
+    ModelCheckpoint(dirpath=path_chkpt, filename="hardmine_initial", monitor="val_loss"),
 ]
 # create trainer, use fast dev run to test the code
 trainer = pl.Trainer(
