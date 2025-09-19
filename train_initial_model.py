@@ -76,7 +76,10 @@ train_dataloader = DataLoader(
 )
 
 Bonobo_val = BonoboDataset(
-    val_df, config.PATH_FILES_BONOBO, transform=transform_val, montage=combine_montage
+    val_df,
+    config.PATH_FILES_BONOBO,
+    transform=transform_val,
+    montage=combine_montage
 )
 
 val_dataloader = DataLoader(
@@ -118,6 +121,7 @@ trainer = pl.Trainer(
     fast_dev_run=False,
 )
 
+print(f"[DEBUG] len val_dataloader: {len(val_dataloader)}")
 trainer.fit(model, train_dataloader, val_dataloader)
 wandb.finish()
 
