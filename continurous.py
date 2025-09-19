@@ -59,7 +59,7 @@ model = ResNet.load_from_checkpoint(
 # map_location=torch.device('cpu') add this if running on CPU machine
 # init trainer
 trainer = pl.Trainer(
-    fast_dev_run=False, enable_progress_bar=False, devices=1, strategy="ddp"
+    fast_dev_run=False, enable_progress_bar=False, devices="auto", strategy="ddp"
 )
 
 # store results

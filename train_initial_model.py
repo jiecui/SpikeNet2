@@ -76,10 +76,7 @@ train_dataloader = DataLoader(
 )
 
 Bonobo_val = BonoboDataset(
-    val_df,
-    config.PATH_FILES_BONOBO,
-    transform=transform_val,
-    montage=combine_montage
+    val_df, config.PATH_FILES_BONOBO, transform=transform_val, montage=combine_montage
 )
 
 val_dataloader = DataLoader(
@@ -112,7 +109,7 @@ callbacks = [
 ]
 # create trainer, use fast dev run to test the code
 trainer = pl.Trainer(
-    devices=1,
+    devices="auto",
     accelerator="gpu",
     min_epochs=30,
     max_epochs=100,

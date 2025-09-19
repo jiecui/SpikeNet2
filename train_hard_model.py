@@ -161,7 +161,7 @@ for i in range(1):
     ]
     # create trainer, use fast dev run to test the code
     trainer = pl.Trainer(
-        devices=1,
+        devices="auto",
         accelerator="gpu",
         min_epochs=30,
         max_epochs=100,
