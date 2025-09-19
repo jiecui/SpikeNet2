@@ -144,7 +144,7 @@ for i in range(1):
     model = ResNet(
         lr=config.LR,
         n_channels=config.N_CHANNELS,
-        Focal_loss=True,  # True means loss function will be Focal loss. Otherwise will be BCE loss
+        Focal_loss=False,  # True means loss function will be Focal loss. Otherwise will be BCE loss
     )
 
     # create a logger
@@ -154,9 +154,7 @@ for i in range(1):
     # create callbacks with early stopping and model checkpoint (saves the best model)
     callbacks = [
         EarlyStopping(monitor="val_loss", patience=5),
-        ModelCheckpoint(
-            dirpath=path_chkpt, filename="without_HM_1sec", monitor="val_loss"
-        ),
+        ModelCheckpoint(dirpath=path_chkpt, filename="hardmine", monitor="val_loss"),
     ]
     # create trainer, use fast dev run to test the code
     trainer = pl.Trainer(
