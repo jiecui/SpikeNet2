@@ -43,9 +43,8 @@ class ResNet(LightningModule):
         y = y.view(-1, 1).float()
         logits = self.forward(x)
         loss_function = BCELoss()
-        if self.Focal_loss == True:
+        if self.Focal_loss:
             loss_function = WeightedFocalLoss()
-
         loss = loss_function(logits, y)
         self.log("train_loss", loss, prog_bar=True, on_step=True, on_epoch=True)
         return loss
