@@ -34,7 +34,9 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from sleeplib.config import Config
-from sleeplib.Resnet_15.model import FineTuning, ResNet
+
+# from sleeplib.Resnet_15.model import FineTuning
+from sleeplib.Resnet_15.model import ResNet
 from sleeplib.datasets import (
     BonoboDataset,
     ContinousToSnippetDataset,
