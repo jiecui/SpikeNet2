@@ -1,7 +1,7 @@
 # config.py
 
 # 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.1 $  $Date: Fri 09/12/2025 04:16:14.055411 PM $
+# $Revision: 0.2 $  $Date: Fri 09/19/2025 04:30:54.592757 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -28,7 +28,7 @@ class Config:
 
     # Preprocessing
     MONTAGE: str = "combine"
-    WINDOWSIZE: float = 1  # 2 seconds (cut length of EEG signals)
+    WINDOWSIZE: int = 1  # 2 seconds (cut length of EEG signals)
 
     # Model parameters
     N_CHANNELS: int = 37  # 19+18
