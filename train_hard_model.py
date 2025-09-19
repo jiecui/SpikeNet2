@@ -106,7 +106,7 @@ val_df = sub_df[sub_df["Mode"] == "Val"]
 
 
 Bonobo_train = Hardmine_BonoboDataset(
-    train_df, # config.PATH_FILES_BONOBO,
+    train_df,  # config.PATH_FILES_BONOBO,
     os.path.join(path_model, "hardmine_npy_round2"),
     transform=transform_train_pos,
     transform_pos=transform_train_pos,
@@ -144,7 +144,7 @@ for i in range(1):
     model = ResNet(
         lr=config.LR,
         n_channels=config.N_CHANNELS,
-        Focal_loss=False,  # True means loss function will be Focal loss. Otherwise will be BCE loss
+        Focal_loss=True,  # True means loss function will be Focal loss. Otherwise will be BCE loss
     )
 
     # create a logger
