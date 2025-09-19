@@ -126,7 +126,7 @@ Bonobo_val = BonoboDataset(
     #  num_pos_augmentations = 1 #1
 )
 val_dataloader = DataLoader(
-    Bonobo_val, batch_size=config.BATCH_SIZE, shuffle=False, num_workers=os.cpu_count()
+    Bonobo_val, batch_size=config.BATCH_SIZE, shuffle=False, num_workers=os.cpu_count() or 1
 )
 
 
