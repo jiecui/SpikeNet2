@@ -169,6 +169,7 @@ for i in range(1):
         fast_dev_run=False,
     )
     # train the model
+    print(f"[DEBUG] len val_dataloader: {len(val_dataloader)}")
     trainer.fit(model, train_dataloader, val_dataloader)
     wandb.finish()
 
