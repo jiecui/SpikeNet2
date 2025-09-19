@@ -1,11 +1,25 @@
-import pandas as pd
+# train model using hard mining dataset
+
+# 2025 Richard J. Cui. Modified: Fri 09/19/2025 03:06:14.957544 PM
+# $Revision: 0.1 $  $Date: Fri 09/19/2025 03:06:14.957544 PM $
+#
+# Mayo Clinic Foundation
+# Rochester, MN 55901, USA
+#
+# Email: Cui.Jie@mayo.edu
+
+# imports
 import wandb
 import torch
 import os
+import sys
+import pickle
+import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.metrics import roc_curve, auc
 import numpy as np
 import matplotlib.pyplot as plt
+import pytorch_lightning as pl
+from sklearn.metrics import roc_curve, auc
 from sklearn.metrics import (
     roc_curve,
     auc,
@@ -14,18 +28,12 @@ from sklearn.metrics import (
     precision_recall_curve,
     average_precision_score,
 )
-import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 from torchvision import transforms
-import torch
-
-# load own code
-import sys
-
-sys.path.append("../")
+from sleeplib.config import Config
 from sleeplib.Resnet_15.model import FineTuning
 from sleeplib.datasets import (
     BonoboDataset,
@@ -41,20 +49,24 @@ from sleeplib.transforms import (
     noise_adder,
     ECG_channel_flip,
 )
+from spikenet2_lib import get_output_root
 
-# this holds all the configuration parameters
-from sleeplib.config import Config
-import pickle
+# load own code
+sys.path.append("../")
 
 # define model name and path
-model_path = "your_path/Models/spikenet2"
+# model_path = "your_path/Models/spikenet2"
+path_model = os.path.join(get_output_root(), "models")
+path_chkpt = os.path.join(get_output_root(), "models", "checkpoint")
+
 # load config and show all default parameters
 config = Config()
 config.print_config()
 combine_montage = CDAC_combine_montage()
 
 # load dataset
-df = pd.read_csv("your_path/SpikeNet2/hard_mining.csv", sep=",")
+# df = pd.read_csv("your_path/SpikeNet2/hard_mining.csv", sep=",")
+df = pd.read_csv(os.path.join(path_model, "hardmine_npy_round2.csv"), sep=",")
 
 transform_train_pos = transforms.Compose(
     [
@@ -102,7 +114,7 @@ Bonobo_train = Hardmine_BonoboDataset(
     num_pos_augmentations=1,  # 2 3 4
 )
 train_dataloader = DataLoader(
-    Bonobo_train, batch_size=config.BATCH_SIZE, shuffle=True, num_workers=os.cpu_count()
+    Bonobo_train, batch_size=config.BATCH_SIZE, shuffle=True, num_workers=os.cpu_count() or 1
 )
 
 Bonobo_val = BonoboDataset(
@@ -130,7 +142,7 @@ for i in range(1):
     callbacks = [
         EarlyStopping(monitor="val_loss", patience=5),
         ModelCheckpoint(
-            dirpath=model_path, filename="without_HM_1sec", monitor="val_loss"
+            dirpath=path_chkpt, filename="without_HM_1sec", monitor="val_loss"
         ),
     ]
     # create trainer, use fast dev run to test the code
@@ -147,4 +159,4 @@ for i in range(1):
     trainer.fit(model, train_dataloader, val_dataloader)
     wandb.finish()
 
-    # [EOF]
+# [EOF]
