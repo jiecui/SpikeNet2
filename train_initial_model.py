@@ -73,7 +73,7 @@ train_dataloader = DataLoader(
     Bonobo_train,
     batch_size=config.BATCH_SIZE,
     shuffle=True,
-    num_workers=os.cpu_count() or 0,
+    num_workers=os.cpu_count() or 1,
 )
 
 Bonobo_val = BonoboDataset(
@@ -84,7 +84,7 @@ val_dataloader = DataLoader(
     Bonobo_val,
     batch_size=config.BATCH_SIZE,
     shuffle=False,
-    num_workers=os.cpu_count() or 0,
+    num_workers=os.cpu_count() or 1,
 )
 
 # ***********
