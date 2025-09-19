@@ -85,7 +85,7 @@ combine_montage = CDAC_combine_montage()
 
 test_dataset = BonoboDataset(
     test_df,
-    "hardmine_npy_round2",
+    config.PATH_FILES_BONOBO,
     transform=transform_val,
     window_size=config.WINDOWSIZE,
     montage=combine_montage,
