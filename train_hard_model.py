@@ -149,7 +149,7 @@ for i in range(1):
 
     # create a logger
     wandb.init(dir="logging")
-    wandb_logger = WandbLogger(project="super_awesome_project")
+    wandb_logger = WandbLogger(project="spikenet2_project", name="spikenet2_run")
 
     # create callbacks with early stopping and model checkpoint (saves the best model)
     callbacks = [
@@ -158,7 +158,7 @@ for i in range(1):
     ]
     # create trainer, use fast dev run to test the code
     trainer = pl.Trainer(
-        devices=[1],
+        devices=1,
         accelerator="gpu",
         min_epochs=30,
         max_epochs=100,
