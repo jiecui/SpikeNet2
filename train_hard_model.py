@@ -153,10 +153,10 @@ for i in range(1):
 
     # create callbacks with early stopping and model checkpoint (saves the best model)
     callbacks = [
-        # EarlyStopping(monitor="val_loss", patience=5),
-        # ModelCheckpoint(dirpath=path_chkpt, filename="hardmine", monitor="val_loss"),
-        EarlyStopping(monitor="train_loss", patience=5),
-        ModelCheckpoint(dirpath=path_chkpt, filename="hardmine", monitor="train_loss"),
+        EarlyStopping(monitor="val_loss", patience=5),
+        ModelCheckpoint(dirpath=path_chkpt, filename="hardmine", monitor="val_loss"),
+        # EarlyStopping(monitor="train_loss", patience=5),
+        # ModelCheckpoint(dirpath=path_chkpt, filename="hardmine", monitor="train_loss"),
     ]
     # create trainer, use fast dev run to test the code
     trainer = pl.Trainer(
