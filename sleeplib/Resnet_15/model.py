@@ -46,7 +46,14 @@ class ResNet(LightningModule):
         if self.Focal_loss:
             loss_function = WeightedFocalLoss()
         loss = loss_function(logits, y)
-        self.log("train_loss", loss, prog_bar=True, on_step=True, on_epoch=True)
+        self.log(
+            "train_loss",
+            loss,
+            prog_bar=True,
+            on_step=True,
+            on_epoch=True,
+            sync_dist=True,
+        )
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -58,7 +65,14 @@ class ResNet(LightningModule):
         if self.Focal_loss:
             loss_function = WeightedFocalLoss()
         loss = loss_function(logits, y)
-        self.log("val_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+        self.log(
+            "val_loss",
+            loss,
+            prog_bar=True,
+            on_step=False,
+            on_epoch=True,
+            sync_dist=True,
+        )
         return loss
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):

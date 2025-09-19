@@ -21,6 +21,7 @@ from sleeplib.datasets import BonoboDataset
 from sleeplib.Resnet_15.model import ResNet
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.strategies import DDPStrategy
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -111,11 +112,13 @@ callbacks = [
 trainer = pl.Trainer(
     devices="auto",
     accelerator="gpu",
+    strategy=DDPStrategy(find_unused_parameters=True),
     min_epochs=30,
     max_epochs=100,
     logger=wandb_logger,
     callbacks=callbacks,
     fast_dev_run=False,
+    log_every_n_steps=5,
 )
 
 trainer.fit(model, train_dataloader, val_dataloader)
