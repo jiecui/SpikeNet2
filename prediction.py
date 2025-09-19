@@ -60,6 +60,7 @@ config.print_config()
 # load dataset
 # df = pd.read_csv("your_path.csv", sep=",")  # ; -> ,
 df = pd.read_csv(config.PATH_LUT_BONOBO, sep=";")  # ; -> ,
+path_model = os.path.join(get_output_root(), "models")
 path_chkpt = os.path.join(get_output_root(), "models", "checkpoint")
 
 # fraction filter
@@ -109,3 +110,15 @@ model = ResNet.load_from_checkpoint(
 trainer = pl.Trainer(
     devices=1, accelerator="gpu", fast_dev_run=False, enable_progress_bar=False
 )
+
+# predict all samples
+preds = trainer.predict(model, test_dataloader)
+preds = np.concatenate(preds)  # preds = np.concatenate(preds)
+
+# store results
+results = test_df[
+    ["event_file", "fraction_of_yes", "total_votes_received", "Mode"]
+].copy()
+results["preds"] = preds
+
+results.to_csv(path_model + "/predictions.csv", index=False)
