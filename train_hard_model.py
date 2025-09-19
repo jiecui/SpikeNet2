@@ -106,8 +106,8 @@ val_df = sub_df[sub_df["Mode"] == "Val"]
 
 
 Bonobo_train = Hardmine_BonoboDataset(
-    train_df,
-    config.PATH_FILES_BONOBO,
+    train_df, # config.PATH_FILES_BONOBO,
+    os.path.join(path_model, "hardmine_npy_round2y"),
     transform=transform_train_pos,
     transform_pos=transform_train_pos,
     transform_neg=transform_train_neg,
