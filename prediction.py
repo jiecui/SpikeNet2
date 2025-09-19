@@ -124,7 +124,7 @@ results["preds"] = preds
 results.to_csv(path_model + "/predictions.csv", index=False)
 
 # auc
-df = pd.read_csv(path_model + "predictions.csv")
+df = pd.read_csv(path_model + "/predictions.csv")
 
 # set up filters for datasets
 high_quality_filter = df["total_votes_received"] >= 2
