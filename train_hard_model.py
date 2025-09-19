@@ -156,7 +156,7 @@ for i in range(1):
         # EarlyStopping(monitor="val_loss", patience=5),
         # ModelCheckpoint(dirpath=path_chkpt, filename="hardmine", monitor="val_loss"),
         EarlyStopping(monitor="train_loss", patience=5),
-        ModelCheckpoint(dirpath=path_chkpt, filename="hardmine_model", monitor="train_loss"),
+        ModelCheckpoint(dirpath=path_chkpt, filename="hardmine", monitor="train_loss"),
     ]
     # create trainer, use fast dev run to test the code
     trainer = pl.Trainer(
