@@ -68,7 +68,8 @@ combine_montage = CDAC_combine_montage()
 
 # load dataset
 # df = pd.read_csv("your_path/SpikeNet2/hard_mining.csv", sep=",")
-df = pd.read_csv(os.path.join(path_model, "hardmine_npy_round2.csv"), sep=",")
+# df = pd.read_csv(os.path.join(path_model, "hardmine_npy_round2.csv"), sep=",")
+df = pd.read_csv(config.PATH_LUT_BONOBO, sep=";")  # ; -> ,
 
 transform_train_pos = transforms.Compose(
     [
@@ -106,8 +107,8 @@ val_df = sub_df[sub_df["Mode"] == "Val"]
 
 
 Bonobo_train = Hardmine_BonoboDataset(
-    train_df,  # config.PATH_FILES_BONOBO,
-    os.path.join(path_model, "hardmine_npy_round2"),
+    train_df,
+    config.PATH_FILES_BONOBO,
     transform=transform_train_pos,
     transform_pos=transform_train_pos,
     transform_neg=transform_train_neg,
@@ -123,7 +124,7 @@ train_dataloader = DataLoader(
 )
 
 Bonobo_val = BonoboDataset(
-    val_df, 
+    val_df,
     config.PATH_FILES_BONOBO,
     transform=transform_val,
     montage=combine_montage,
@@ -169,7 +170,6 @@ for i in range(1):
         fast_dev_run=False,
     )
     # train the model
-    print(f"[DEBUG] len val_dataloader: {len(val_dataloader)}")
     trainer.fit(model, train_dataloader, val_dataloader)
     wandb.finish()
 
