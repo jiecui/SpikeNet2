@@ -10,23 +10,15 @@
 
 # imports
 import os
-import pickle
 import torch
-import pickle
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import numpy as np
-import pandas as pd
 import pytorch_lightning as pl
 from sklearn.metrics import (
     roc_curve,
     auc,
-    f1_score,
-    accuracy_score,
-    precision_recall_curve,
-    average_precision_score,
 )
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -34,7 +26,7 @@ from torchvision import transforms
 # from pytorch_lightning.callbacks import modelcheckpoint
 from sleeplib.datasets import BonoboDataset
 from sleeplib.Resnet_15.model import ResNet
-from sleeplib.transforms import cut_and_jitter, channel_flip, extremes_remover
+from sleeplib.transforms import cut_and_jitter, extremes_remover
 from sleeplib.config import Config
 from sleeplib.montages import (
     # CDAC_bipolar_montage,
@@ -153,3 +145,5 @@ ax.set_ylabel("True Positive Rate")
 ax.set_title("Receiver Operating Characteristic (ROC) Curve")
 ax.legend()
 fig.savefig(path_model + "/ROC.png", dpi=300, bbox_inches="tight")
+
+# [EOF]
