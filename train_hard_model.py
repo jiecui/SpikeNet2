@@ -10,24 +10,10 @@
 
 # imports
 import wandb
-import torch
 import os
 import sys
-import pickle
 import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-import matplotlib.pyplot as plt
 import pytorch_lightning as pl
-from sklearn.metrics import roc_curve, auc
-from sklearn.metrics import (
-    roc_curve,
-    auc,
-    f1_score,
-    accuracy_score,
-    precision_recall_curve,
-    average_precision_score,
-)
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -39,17 +25,13 @@ from sleeplib.config import Config
 from sleeplib.Resnet_15.model import ResNet
 from sleeplib.datasets import (
     BonoboDataset,
-    ContinousToSnippetDataset,
     Hardmine_BonoboDataset,
 )
-from sleeplib.montages import CDAC_combine_montage, ECG_combine_montage
+from sleeplib.montages import CDAC_combine_montage
 from sleeplib.transforms import (
     cut_and_jitter,
     channel_flip,
     extremes_remover,
-    random_channel_zero,
-    noise_adder,
-    ECG_channel_flip,
 )
 from spikenet2_lib import get_output_root
 
@@ -68,8 +50,7 @@ combine_montage = CDAC_combine_montage()
 
 # load dataset
 # df = pd.read_csv("your_path/SpikeNet2/hard_mining.csv", sep=",")
-# df = pd.read_csv(os.path.join(path_model, "hardmine_npy_round2.csv"), sep=",")
-df = pd.read_csv(config.PATH_LUT_BONOBO, sep=";")  # ; -> ,
+df = pd.read_csv(os.path.join(path_model, "hardmine_npy_round2.csv"), sep=",")
 
 transform_train_pos = transforms.Compose(
     [
@@ -107,8 +88,8 @@ val_df = sub_df[sub_df["Mode"] == "Val"]
 
 
 Bonobo_train = Hardmine_BonoboDataset(
-    train_df,
-    config.PATH_FILES_BONOBO,
+    train_df,  # config.PATH_FILES_BONOBO,
+    os.path.join(path_model, "hardmine_npy_round2"),
     transform=transform_train_pos,
     transform_pos=transform_train_pos,
     transform_neg=transform_train_neg,
@@ -124,8 +105,8 @@ train_dataloader = DataLoader(
 )
 
 Bonobo_val = BonoboDataset(
-    val_df,
-    config.PATH_FILES_BONOBO,
+    val_df,  # config.PATH_FILES_BONOBO,
+    os.path.join(path_model, "hardmine_npy_round2"),
     transform=transform_val,
     montage=combine_montage,
     window_size=config.WINDOWSIZE,
@@ -142,7 +123,8 @@ val_dataloader = DataLoader(
 for i in range(1):
     # build model
     # model = FineTuning(lr=config.LR, n_channels=37, Focal_loss=False)  # False
-    model = ResNet(
+    model = ResNet.load_from_checkpoint(
+        os.path.join(path_chkpt, "hardmine.ckpt"),
         lr=config.LR,
         n_channels=config.N_CHANNELS,
         Focal_loss=False,  # True means loss function will be Focal loss. Otherwise will be BCE loss
