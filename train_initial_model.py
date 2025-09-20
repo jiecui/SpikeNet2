@@ -1,7 +1,7 @@
 # Train initial model on bonobo dataset
 
 # 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.1 $  $Date: Fri 09/12/2025 04:16:14.055411 PM $
+# $Revision: 0.2 $  $Date: Sat 09/20/2025 11:35:57.050382 AM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -113,12 +113,12 @@ trainer = pl.Trainer(
     devices="auto",
     accelerator="gpu",
     strategy=DDPStrategy(find_unused_parameters=True),
+    log_every_n_steps=5,
     min_epochs=30,
     max_epochs=100,
     logger=wandb_logger,
     callbacks=callbacks,
     fast_dev_run=False,
-    log_every_n_steps=5,
 )
 
 trainer.fit(model, train_dataloader, val_dataloader)
