@@ -1,7 +1,7 @@
 # train model using hard mining dataset
 
 # 2025 Richard J. Cui. Modified: Fri 09/19/2025 03:06:14.957544 PM
-# $Revision: 0.1 $  $Date: Fri 09/19/2025 03:06:14.957544 PM $
+# $Revision: 0.2 $  $Date: Sat 09/20/2025 11:35:57.050382 AM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -17,6 +17,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.strategies import DDPStrategy
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from sleeplib.config import Config
@@ -138,13 +139,13 @@ for i in range(1):
     callbacks = [
         EarlyStopping(monitor="val_loss", patience=5),
         ModelCheckpoint(dirpath=path_chkpt, filename="hardmine", monitor="val_loss"),
-        # EarlyStopping(monitor="train_loss", patience=5),
-        # ModelCheckpoint(dirpath=path_chkpt, filename="hardmine", monitor="train_loss"),
     ]
     # create trainer, use fast dev run to test the code
     trainer = pl.Trainer(
         devices="auto",
         accelerator="gpu",
+        strategy=DDPStrategy(find_unused_parameters=True),
+        log_every_n_steps=5,
         min_epochs=30,
         max_epochs=100,
         logger=wandb_logger,
