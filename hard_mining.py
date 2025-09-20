@@ -29,6 +29,20 @@ cluster_len = 2  # 10 8 5 3
 
 # function definition
 def hard_mine(df):
+    """
+    The function `hard_mine` identifies clusters of false positives in a
+    DataFrame based on a specified threshold and returns the indices of the
+    highest prediction values within each cluster.
+    
+    :param df: It seems like the code snippet you provided is a function named
+    `hard_mine` that processes a DataFrame to identify clusters of false
+    positives based on a threshold value. The function then extracts the index
+    of the highest prediction value from each cluster and filters them based on
+    a specified number of points
+    :return: The `filtered_indices` list containing the indices of the highest
+    prediction values from each cluster that meet the specified conditions is
+    being returned.
+    """
     # Correcting the column name and identifying false positives
     column_name = df.columns[0]
     false_positives = df[df[column_name] > threshold]
