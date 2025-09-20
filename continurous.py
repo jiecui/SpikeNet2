@@ -54,7 +54,7 @@ model = ResNet.load_from_checkpoint(
     # "your_path/Models/spikenet2/hardmine.ckpt",
     os.path.join(path_chkpt, "hardmine.ckpt"),
     lr=config.LR,
-    n_channels=37,
+    n_channels=config.N_CHANNELS,
 )
 # map_location=torch.device('cpu') add this if running on CPU machine
 # init trainer
