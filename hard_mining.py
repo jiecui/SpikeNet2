@@ -1,7 +1,7 @@
 # get hard-negative samples
 
 # 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.1 $  $Date: Fri 09/12/2025 04:16:14.055411 PM $
+# $Revision: 0.2 $  $Date: Sat 09/20/2025 20:58:56.502211 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -33,7 +33,7 @@ def hard_mine(df):
     The function `hard_mine` identifies clusters of false positives in a
     DataFrame based on a specified threshold and returns the indices of the
     highest prediction values within each cluster.
-    
+
     :param df: It seems like the code snippet you provided is a function named
     `hard_mine` that processes a DataFrame to identify clusters of false
     positives based on a threshold value. The function then extracts the index
@@ -43,8 +43,10 @@ def hard_mine(df):
     prediction values from each cluster that meet the specified conditions is
     being returned.
     """
-    # Correcting the column name and identifying false positives
+
     column_name = df.columns[0]
+    # Remove rows of df[column_name] where the type is 'str'
+    df = df[~df[column_name].apply(lambda x: isinstance(x, str))]
     false_positives = df[df[column_name] > threshold]
 
     # Display the number of false positives and their first few rows
