@@ -45,8 +45,8 @@ def hard_mine(df):
     """
 
     column_name = df.columns[0]
-    # Remove rows of df[column_name] where the type is 'str'
-    df = df[~df[column_name].apply(lambda x: isinstance(x, str))]
+    # Remove rows of df[column_name] where the type is 'str' and 'nan'
+    df = df[~df[column_name].apply(lambda x: isinstance(x, str))].dropna()
     false_positives = df[df[column_name] > threshold]
 
     # Display the number of false positives and their first few rows
