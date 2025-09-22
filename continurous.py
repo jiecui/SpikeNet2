@@ -64,7 +64,7 @@ trainer = pl.Trainer(
     accelerator="gpu",
     strategy=DDPStrategy(find_unused_parameters=True),
     fast_dev_run=False,
-    enable_progress_bar=True,
+    enable_progress_bar=False,
 )
 
 # store results
