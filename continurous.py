@@ -1,7 +1,7 @@
 # get predictions on control EEG
 
 # 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.1 $  $Date: Fri 09/12/2025 04:16:14.055411 PM $
+# $Revision: 0.2 $  $Date: Mon 09/22/2025 04:16:14.055411 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -15,6 +15,7 @@ import logging
 import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
+from pytorch_lightning.strategies import DDPStrategy
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -59,7 +60,11 @@ model = ResNet.load_from_checkpoint(
 # map_location=torch.device('cpu') add this if running on CPU machine
 # init trainer
 trainer = pl.Trainer(
-    fast_dev_run=False, enable_progress_bar=False, devices="auto", strategy="ddp"
+    devices="auto",
+    accelerator="gpu",
+    strategy=DDPStrategy(find_unused_parameters=True),
+    fast_dev_run=False,
+    enable_progress_bar=True,
 )
 
 # store results
