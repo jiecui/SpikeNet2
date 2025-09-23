@@ -53,7 +53,7 @@ con_combine_montage = con_combine_montage()
 # load pretrained model
 model = ResNet.load_from_checkpoint(
     # "your_path/Models/spikenet2/hardmine.ckpt",
-    os.path.join(path_chkpt, "hardmine-v1.ckpt"),
+    os.path.join(path_chkpt, "hardmine.ckpt"),
     lr=config.LR,
     n_channels=config.N_CHANNELS,
 )
