@@ -51,7 +51,10 @@ combine_montage = CDAC_combine_montage()
 
 # load dataset
 # df = pd.read_csv("your_path/SpikeNet2/hard_mining.csv", sep=",")
-df = pd.read_csv(os.path.join(path_model, "hardmine_npy_round2.csv"), sep=",")
+df_lut = pd.read_csv(config.PATH_LUT_BONOBO, sep=";")  # ; -> ,
+df_hm = pd.read_csv(os.path.join(path_model, "hardmine_npy_round2.csv"), sep=",")
+# concatenate two dataframes
+# df = pd.concat([df_lut, df_hm], ignore_index=True)
 
 transform_train_pos = transforms.Compose(
     [
@@ -81,13 +84,15 @@ transform_val = transforms.Compose(
 )  # ,CDAC_signal_flip(p=0)])
 
 # init datasets
-sub_df = df[df["total_votes_received"] > 2]
+# sub_df = df[df["total_votes_received"] > 2]
+# train_df = sub_df[sub_df["Mode"] == "Train"]
+# val_df = sub_df[sub_df["Mode"] == "Val"]
+sub_df = df_hm[df_hm["total_votes_received"] > 2]
 train_df = sub_df[sub_df["Mode"] == "Train"]
-val_df = sub_df[sub_df["Mode"] == "Val"]
+val_df = df_lut[df_lut["Mode"] == "Val"]
+
 
 # set up dataloaders
-
-
 Bonobo_train = Hardmine_BonoboDataset(
     train_df,  # config.PATH_FILES_BONOBO,
     os.path.join(path_model, "hardmine_npy_round2"),
@@ -106,8 +111,8 @@ train_dataloader = DataLoader(
 )
 
 Bonobo_val = BonoboDataset(
-    val_df,  # config.PATH_FILES_BONOBO,
-    os.path.join(path_model, "hardmine_npy_round2"),
+    val_df,
+    config.PATH_FILES_BONOBO,
     transform=transform_val,
     montage=combine_montage,
     window_size=config.WINDOWSIZE,
@@ -125,7 +130,7 @@ for i in range(1):
     # build model
     # model = FineTuning(lr=config.LR, n_channels=37, Focal_loss=False)  # False
     model = ResNet.load_from_checkpoint(
-        os.path.join(path_chkpt, "hardmine-v1.ckpt"),
+        os.path.join(path_chkpt, "hardmine-v0.ckpt"),
         lr=config.LR,
         n_channels=config.N_CHANNELS,
         Focal_loss=False,  # True means loss function will be Focal loss. Otherwise will be BCE loss
@@ -138,7 +143,7 @@ for i in range(1):
     # create callbacks with early stopping and model checkpoint (saves the best model)
     callbacks = [
         EarlyStopping(monitor="val_loss", patience=5),
-        ModelCheckpoint(dirpath=path_chkpt, filename="hardmine-v1", monitor="val_loss"),
+        ModelCheckpoint(dirpath=path_chkpt, filename="hardmine-v0", monitor="val_loss"),
     ]
     # create trainer, use fast dev run to test the code
     trainer = pl.Trainer(
