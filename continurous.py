@@ -1,7 +1,7 @@
 # get predictions on control EEG
 
 # 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.2 $  $Date: Mon 09/22/2025 04:16:14.055411 PM $
+# $Revision: 0.3 $  $Date: Wed 09/24/2025 03:18:17.824951 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -41,8 +41,8 @@ sys.path.append("../")
 # load config and show all default parameters
 config = Config()
 path_model = os.path.join(get_output_root(), "models")
-path_hdmin = os.path.join(get_output_root(), "models", "hard_mine")
-path_chkpt = os.path.join(get_output_root(), "models", "checkpoint")
+path_hdmin = os.path.join(path_model, "hard_mine")
+path_chkpt = os.path.join(path_model, "checkpoint")
 
 # set up dataloader to predict all samples in test dataset
 transform_train = transforms.Compose([extremes_remover(signal_max=2000, signal_min=20)])
@@ -53,7 +53,7 @@ con_combine_montage = con_combine_montage()
 # load pretrained model
 model = ResNet.load_from_checkpoint(
     # "your_path/Models/spikenet2/hardmine.ckpt",
-    os.path.join(path_chkpt, "hardmine-v1.ckpt"),
+    os.path.join(path_chkpt, "hardmine-v2.ckpt"),
     lr=config.LR,
     n_channels=config.N_CHANNELS,
 )

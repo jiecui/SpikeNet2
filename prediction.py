@@ -16,10 +16,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import pytorch_lightning as pl
-from sklearn.metrics import (
-    roc_curve,
-    auc,
-)
+from sklearn.metrics import roc_curve, auc
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
@@ -53,7 +50,7 @@ config.print_config()
 # df = pd.read_csv("your_path.csv", sep=",")  # ; -> ,
 df = pd.read_csv(config.PATH_LUT_BONOBO, sep=";")  # ; -> ,
 path_model = os.path.join(get_output_root(), "models")
-path_chkpt = os.path.join(get_output_root(), "models", "checkpoint")
+path_chkpt = os.path.join(path_model, "checkpoint")
 
 # fraction filter
 frac_filter = (df["fraction_of_yes"] >= 6 / 8) | (df["fraction_of_yes"] <= 2 / 8)
@@ -93,7 +90,7 @@ for x, y in test_dataloader:
 
 # load pretrained model
 model = ResNet.load_from_checkpoint(
-    os.path.join(path_chkpt, "hardmine-v1.ckpt"),
+    os.path.join(path_chkpt, "hardmine-v2.ckpt"),
     lr=config.LR,
     n_channels=config.N_CHANNELS,
 )
