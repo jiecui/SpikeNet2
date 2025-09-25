@@ -90,7 +90,7 @@ for x, y in test_dataloader:
 
 # load pretrained model
 model = ResNet.load_from_checkpoint(
-    os.path.join(path_chkpt, "hardmine-v2.ckpt"),
+    os.path.join(path_chkpt, "hardmine-v3.ckpt"),
     lr=config.LR,
     n_channels=config.N_CHANNELS,
 )
