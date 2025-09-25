@@ -141,6 +141,6 @@ ax.set_xlabel("False Positive Rate")
 ax.set_ylabel("True Positive Rate")
 ax.set_title("Receiver Operating Characteristic (ROC) Curve")
 ax.legend()
-fig.savefig(path_model + "/ROC.png", dpi=300, bbox_inches="tight")
+fig.savefig(os.path.join(path_model, "ROC-v3.png"), dpi=300, bbox_inches="tight")
 
 # [EOF]

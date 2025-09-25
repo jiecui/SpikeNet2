@@ -43,6 +43,7 @@ sys.path.append("../")
 # model_path = "your_path/Models/spikenet2"
 path_model = os.path.join(get_output_root(), "models")
 path_chkpt = os.path.join(get_output_root(), "models", "checkpoint")
+path_npy = os.path.join(path_model, "train_hard_npy")
 
 # load config and show all default parameters
 config = Config()
@@ -54,7 +55,7 @@ combine_montage = CDAC_combine_montage()
 df_lut = pd.read_csv(config.PATH_LUT_BONOBO, sep=";")  # ; -> ,
 df_hm = pd.read_csv(os.path.join(path_model, "hardmine_npy_round2.csv"), sep=",")
 # concatenate two dataframes
-# df = pd.concat([df_lut, df_hm], ignore_index=True)
+df = pd.concat([df_lut, df_hm], ignore_index=True)
 
 transform_train_pos = transforms.Compose(
     [
@@ -84,18 +85,15 @@ transform_val = transforms.Compose(
 )  # ,CDAC_signal_flip(p=0)])
 
 # init datasets
-# sub_df = df[df["total_votes_received"] > 2]
-# train_df = sub_df[sub_df["Mode"] == "Train"]
-# val_df = sub_df[sub_df["Mode"] == "Val"]
-sub_df = df_hm[df_hm["total_votes_received"] > 2]
+sub_df = df[df["total_votes_received"] > 2]
 train_df = sub_df[sub_df["Mode"] == "Train"]
-val_df = df_lut[df_lut["Mode"] == "Val"]
+val_df = sub_df[sub_df["Mode"] == "Val"]
 
 
 # set up dataloaders
 Bonobo_train = Hardmine_BonoboDataset(
     train_df,  # config.PATH_FILES_BONOBO,
-    os.path.join(path_model, "hardmine_npy_round2"),
+    path_npy,
     transform=transform_train_pos,
     transform_pos=transform_train_pos,
     transform_neg=transform_train_neg,

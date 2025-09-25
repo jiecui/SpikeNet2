@@ -1,7 +1,7 @@
 # get hard-negative samples
 
 # 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.2 $  $Date: Sat 09/20/2025 20:58:56.502211 PM $
+# $Revision: 0.3 $  $Date: Wed 09/24/2025 21:48:23.790842 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -14,7 +14,9 @@ import pandas as pd
 import mat73
 from tqdm import tqdm
 import os
+import shutil
 from spikenet2_lib import get_database_root, get_output_root, get_proj_root
+from sleeplib.config import Config
 
 # constants
 # Assuming signal is your original signal stored as a numpy array
@@ -101,8 +103,38 @@ def count_files_in_directory(directory_path):
     )
 
 
+def copy_new_files(source_dir, dest_dir):
+    # Ensure the destination directory exists
+    os.makedirs(dest_dir, exist_ok=True)
+
+    # Get list of files in source directory
+    source_files = [
+        f for f in os.listdir(source_dir) if os.path.isfile(os.path.join(source_dir, f))
+    ]
+
+    # Get list of files in destination directory
+    dest_files = [
+        f for f in os.listdir(dest_dir) if os.path.isfile(os.path.join(dest_dir, f))
+    ]
+
+    # Find new files (files in source but not in destination)
+    new_files = [f for f in source_files if f not in dest_files]
+
+    if new_files:
+        for filename in new_files:
+            source_file = os.path.join(source_dir, filename)
+            dest_file = os.path.join(dest_dir, filename)
+
+            try:
+                shutil.copy2(source_file, dest_file)
+            except Exception as e:
+                print(f"  Error copying {filename}: {str(e)}")
+
+
 # round 1?
 path_controls = os.path.join(get_proj_root(), "controlset.csv")  # EEG without spikes
+path_model = os.path.join(get_output_root(), "models")
+path_round2 = os.path.join(path_model, "hardmine_npy_round2")
 controls = pd.read_csv(path_controls)
 train_controls = controls[controls["Mode"] == "Train"]
 # train_controls = controls
@@ -133,21 +165,14 @@ for eeg_file in tqdm(train_controls.EEG_index, desc="Hard Mining"):
         #     + str(idx)
         #     + ".npy"
         # )
-        path = os.path.join(
-            get_output_root(),
-            "models",
-            "hardmine_npy_round2",
-            eeg_file + "_" + str(idx) + ".npy",
-        )
+        path = os.path.join(path_round2, eeg_file + "_" + str(idx) + ".npy")
         seg = seg.transpose(1, 0)
         # print(seg.shape)
         np.save(path, seg)
 
 # round 2
 # count_files_in_directory("your_path/SpikeNet2/Models/SpikeNet2/hardmine_npy_round2")
-count_files_in_directory(
-    os.path.join(get_output_root(), "models", "hardmine_npy_round2")
-)
+count_files_in_directory(path_round2)
 
 # read csv
 # df = pd.read_csv("your_path/SpikeNet2/hard_mining_round1.csv")
@@ -157,9 +182,7 @@ df = pd.read_csv(os.path.join(get_output_root(), "models", "hardmine_npy_round1.
 npy_files = [
     f
     # for f in os.listdir("your_path/SpikeNet2/Models/SpikeNet2/hardmine_npy_round2")
-    for f in os.listdir(
-        os.path.join(get_output_root(), "models", "hardmine_npy_round2")
-    )
+    for f in os.listdir(path_round2)
     if f.endswith(".npy")
 ]
 
@@ -183,6 +206,19 @@ new_df = pd.DataFrame(new_data)
 # Add new data to the original DataFrame
 df = pd.concat([df, new_df], ignore_index=True)
 # df.to_csv("your_path/SpikeNet2/hard_mining_round2.csv", index=False)
-df.to_csv(
-    os.path.join(get_output_root(), "models", "hardmine_npy_round2.csv"), index=False
-)
+df.to_csv(os.path.join(path_model, "hardmine_npy_round2.csv"), index=False)
+
+# copy files to folder train_hard_npy
+# check if the folder train_hard_npy exists under path_model
+path_npy = os.path.join(path_model, "train_hard_npy")
+config = Config()
+source_path = config.PATH_FILES_BONOBO
+
+print(f"Copying new files from {source_path} to {path_npy}...")
+copy_new_files(source_path, path_npy)
+
+# copy files from hardmine_npy_round2 to path_npy
+print(f"Copying new files from {path_round2} to {path_npy}...")
+copy_new_files(path_round2, path_npy)
+
+# [EOF]
