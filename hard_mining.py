@@ -1,7 +1,7 @@
 # get hard-negative samples
 
 # 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.3 $  $Date: Wed 09/24/2025 21:48:23.790842 PM $
+# $Revision: 0.4 $  $Date: Thu 09/25/2025 09:35:51.999862 AM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -14,14 +14,15 @@ import pandas as pd
 import mat73
 from tqdm import tqdm
 import os
-import shutil
 from spikenet2_lib import get_database_root, get_output_root, get_proj_root
 from sleeplib.config import Config
+from spikenet2_lib import copy_new_files
 
 # constants
 # Assuming signal is your original signal stored as a numpy array
 # signal = np.array([...])
-sampling_rate = 128
+config = Config()
+sampling_rate = config.FQ  # Hz
 time_step = 8
 window_length = 3  # in seconds
 num_points = sampling_rate * window_length
@@ -101,34 +102,6 @@ def count_files_in_directory(directory_path):
     return len(
         [item for item in items if os.path.isfile(os.path.join(directory_path, item))]
     )
-
-
-def copy_new_files(source_dir, dest_dir):
-    # Ensure the destination directory exists
-    os.makedirs(dest_dir, exist_ok=True)
-
-    # Get list of files in source directory
-    source_files = [
-        f for f in os.listdir(source_dir) if os.path.isfile(os.path.join(source_dir, f))
-    ]
-
-    # Get list of files in destination directory
-    dest_files = [
-        f for f in os.listdir(dest_dir) if os.path.isfile(os.path.join(dest_dir, f))
-    ]
-
-    # Find new files (files in source but not in destination)
-    new_files = [f for f in source_files if f not in dest_files]
-
-    if new_files:
-        for filename in new_files:
-            source_file = os.path.join(source_dir, filename)
-            dest_file = os.path.join(dest_dir, filename)
-
-            try:
-                shutil.copy2(source_file, dest_file)
-            except Exception as e:
-                print(f"  Error copying {filename}: {str(e)}")
 
 
 # round 1?
@@ -211,7 +184,6 @@ df.to_csv(os.path.join(path_model, "hardmine_npy_round2.csv"), index=False)
 # copy files to folder train_hard_npy
 # check if the folder train_hard_npy exists under path_model
 path_npy = os.path.join(path_model, "train_hard_npy")
-config = Config()
 source_path = config.PATH_FILES_BONOBO
 
 print(f"Copying new files from {source_path} to {path_npy}...")
