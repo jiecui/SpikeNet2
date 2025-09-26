@@ -1,7 +1,7 @@
 # Train initial model on bonobo dataset
 
 # 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.2 $  $Date: Sat 09/20/2025 11:35:57.050382 AM $
+# $Revision: 0.3 $  $Date: Fri 09/26/2025 02:34:19.732870 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -110,12 +110,12 @@ callbacks = [
 ]
 # create trainer, use fast dev run to test the code
 trainer = pl.Trainer(
-    devices="auto",
+    devices=config.DEVICES,
     accelerator="gpu",
     strategy=DDPStrategy(find_unused_parameters=True),
     log_every_n_steps=5,
-    min_epochs=30,
-    max_epochs=100,
+    min_epochs=200,
+    max_epochs=300,
     logger=wandb_logger,
     callbacks=callbacks,
     fast_dev_run=False,
