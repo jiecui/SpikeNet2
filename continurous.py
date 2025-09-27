@@ -53,7 +53,7 @@ con_combine_montage = con_combine_montage()
 # load pretrained model
 model = ResNet.load_from_checkpoint(
     # "your_path/Models/spikenet2/hardmine.ckpt",
-    os.path.join(path_chkpt, "hardmine-v5.ckpt"),
+    os.path.join(path_chkpt, "hardmine-v7.ckpt"),
     lr=config.LR,
     n_channels=config.N_CHANNELS,
 )
@@ -85,7 +85,7 @@ for eeg_file in tqdm(controls.EEG_index):
     )
     con_dataloader = DataLoader(
         Bonobo_con,
-        batch_size=128,
+        batch_size=config.BATCH_SIZE,
         shuffle=False,
         num_workers=os.cpu_count() or 0,
     )
