@@ -35,7 +35,7 @@ class Config:
     N_CHANNELS: int = 37  # 19+18
 
     # training parameters
-    BATCH_SIZE: int = 256  # test 128
+    BATCH_SIZE: int = 256*4  # test 128
     LR: float = 1e-4  # test 1e-4
 
     # accelerator
