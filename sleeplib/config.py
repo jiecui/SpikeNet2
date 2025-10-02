@@ -1,7 +1,7 @@
 # config.py
 
 # 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.3 $  $Date: Fri 09/26/2025 02:34:19.732870 PM $
+# $Revision: 0.4 $  $Date: Thu 10/02/2025 02:28:14.352718 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -35,7 +35,7 @@ class Config:
     N_CHANNELS: int = 37  # 19+18
 
     # training parameters
-    BATCH_SIZE: int = 256*2  # test 128
+    BATCH_SIZE: int = 256*1  # test 128
     LR: float = 1e-4  # test 1e-4
 
     # accelerator

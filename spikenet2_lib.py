@@ -1,7 +1,7 @@
 # Library for Spikenet2
 
 # 2025 Richard J. Cui. Created: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.2 $  $Date: Thu 09/25/2025 09:35:51.999862 AM $
+# $Revision: 0.3 $  $Date: Thu 10/02/2025 02:28:14.352718 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -64,8 +64,6 @@ def get_database_root():
         return os.path.join(
             "/home",
             "ext_cui_jie_mayo_edu",
-            "FuseMount",
-            "richard",
             "Documents",
             "Richard",
             "Datasets",
