@@ -128,7 +128,7 @@ for i in range(1):
     # build model
     # model = FineTuning(lr=config.LR, n_channels=37, Focal_loss=False)  # False
     model = ResNet.load_from_checkpoint(
-        os.path.join(path_chkpt, "hardmine-v10.ckpt"),
+        os.path.join(path_chkpt, "hardmine-v11.ckpt"),
         lr=config.LR,
         n_channels=config.N_CHANNELS,
         Focal_loss=False,  # True means loss function will be Focal loss. Otherwise will be BCE loss
@@ -141,7 +141,7 @@ for i in range(1):
     # create callbacks with early stopping and model checkpoint (saves the best model)
     callbacks = [
         EarlyStopping(monitor="val_loss", patience=5),
-        ModelCheckpoint(dirpath=path_chkpt, filename="hardmine-v11", monitor="val_loss"),
+        ModelCheckpoint(dirpath=path_chkpt, filename="hardmine-v12", monitor="val_loss"),
     ]
     # create trainer, use fast dev run to test the code
     trainer = pl.Trainer(
