@@ -35,11 +35,11 @@ class Config:
     N_CHANNELS: int = 37  # 19+18
 
     # training parameters
-    BATCH_SIZE: int = 256*1  # test 128
-    LR: float = 1e-4  # test 1e-4
+    BATCH_SIZE: int = 256*4  # test 128
+    LR: float = 1e-4*4  # test 1e-4
 
     # accelerator
-    DEVICES: Union[List[int], str, int] = "auto"
+    DEVICES: Union[List[int], str, int] = 4 # "auto"
 
     def print_config(self):
         print("THIS CONFIG FILE CONTAINS THE FOLLOWING PARAMETERS :\n")
