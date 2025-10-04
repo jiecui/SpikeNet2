@@ -55,7 +55,7 @@ path_chkpt = os.path.join(path_model, "checkpoint")
 # fraction filter
 frac_filter = (df["fraction_of_yes"] >= 6 / 8) | (df["fraction_of_yes"] <= 2 / 8)
 spike_filter = df["fraction_of_yes"] >= 6 / 8
-mode_filter = df["Mode"] == "Test"
+mode_filter = df["Mode"] == "Test"  # "Train" "Test" "Val"
 extreme_quality_filter = df["total_votes_received"] >= 8
 quality_filter = df["total_votes_received"] >= 2
 
@@ -90,7 +90,7 @@ for x, y in test_dataloader:
 
 # load pretrained model
 model = ResNet.load_from_checkpoint(
-    os.path.join(path_chkpt, "hardmine-init1-v3.ckpt"),
+    os.path.join(path_chkpt, "hardmine-v0.ckpt"),
     lr=config.LR,
     n_channels=config.N_CHANNELS,
 )
@@ -118,7 +118,7 @@ df = pd.read_csv(path_model + "/predictions.csv")
 # set up filters for datasets
 high_quality_filter = df["total_votes_received"] >= 2
 ultra_quality_filter = df["total_votes_received"] >= 8
-mode_filter = df["Mode"] == "Test"
+mode_filter = df["Mode"] == "Test"  # "Train" "Test" "Val"
 frac_filter = (df["fraction_of_yes"] >= 6 / 8) | (df["fraction_of_yes"] <= 2 / 8)
 
 # load samples as defined in spikenet paper
@@ -141,6 +141,6 @@ ax.set_xlabel("False Positive Rate")
 ax.set_ylabel("True Positive Rate")
 ax.set_title("Receiver Operating Characteristic (ROC) Curve")
 ax.legend()
-fig.savefig(os.path.join(path_model, "ROC-init1-v3.png"), dpi=300, bbox_inches="tight")
+fig.savefig(os.path.join(path_model, "ROC-v0.png"), dpi=300, bbox_inches="tight")
 
 # [EOF]

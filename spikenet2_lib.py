@@ -1,7 +1,7 @@
 # Library for Spikenet2
 
 # 2025 Richard J. Cui. Created: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.3 $  $Date: Thu 10/02/2025 02:28:14.352718 PM $
+# $Revision: 0.4 $  $Date: Fri 10/03/2025 07:52:45.867114 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -69,7 +69,11 @@ def get_database_root():
             "Datasets",
             "spikenet2_datasets",
         )
-    elif host_name == "bnel-lambda1" or host_name == "bnel-lambda2":  # MSEL lab servers
+    elif host_name == "bnel-lambda1":  # MSEL lab servers
+        return os.path.join(
+            "/home", "richard", "Documents", "Richard", "Datasets", "spikenet2_datasets"
+        )
+    elif host_name == "bnel-lambda2":  # MSEL lab servers
         return os.path.join(
             "/mnt", "eplab", "Personal", "Richard", "Datasets", "spikenet2_datasets"
         )

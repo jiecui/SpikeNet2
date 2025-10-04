@@ -91,7 +91,7 @@ val_dataloader = DataLoader(
 # build model
 # ***********
 # model = ResNet.load_from_checkpoint(
-#     os.path.join(path_chkpt, "hardmine-init-v20.ckpt"),
+#     os.path.join(path_chkpt, "hardmine-init-v0.ckpt"),
 #     lr=config.LR,
 #     n_channels=config.N_CHANNELS,
 #     Focal_loss=True,  # True means loss function will be Focal loss. Otherwise will be BCE loss
@@ -113,7 +113,7 @@ wandb_logger = WandbLogger(project="spikenet2_project", name="spikenet2_run")
 # create callbacks with early stopping and model checkpoint (saves the best model)
 callbacks = [
     EarlyStopping(monitor="val_loss", patience=5),
-    ModelCheckpoint(dirpath=path_chkpt, filename="hardmine-init1-v3", monitor="val_loss"),
+    ModelCheckpoint(dirpath=path_chkpt, filename="hardmine-init-v0", monitor="val_loss"),
 ]
 # create trainer, use fast dev run to test the code
 trainer = pl.Trainer(
@@ -121,8 +121,8 @@ trainer = pl.Trainer(
     accelerator="gpu",
     strategy=DDPStrategy(find_unused_parameters=True),
     log_every_n_steps=5,
-    min_epochs=200,
-    max_epochs=300,
+    min_epochs=201,
+    max_epochs=301,
     logger=wandb_logger,
     callbacks=callbacks,
     fast_dev_run=False,
