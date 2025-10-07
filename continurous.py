@@ -1,7 +1,7 @@
 # get predictions on control EEG
 
 # 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.3 $  $Date: Wed 09/24/2025 03:18:17.824951 PM $
+# $Revision: 0.4 $  $Date: Tue 10/07/2025 04:49:32.169684 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -53,7 +53,7 @@ con_combine_montage = con_combine_montage()
 # load pretrained model
 model = ResNet.load_from_checkpoint(
     # "your_path/Models/spikenet2/hardmine.ckpt",
-    os.path.join(path_chkpt, "hardmine-v3.ckpt"),
+    os.path.join(path_chkpt, "hardmine-v5.ckpt"),
     lr=config.LR,
     n_channels=config.N_CHANNELS,
 )
