@@ -19,6 +19,7 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import torch
+from contextlib import nullcontext
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from sleeplib.Resnet_15.model import ResNet
 from sleeplib.datasets import ContinousToSnippetDataset
@@ -121,6 +122,68 @@ def process_single_eeg_file_cpu(args):
         return f"✗ Error processing {eeg_file}: {str(e)}"
 
 
+def verify_gpu_availability(gpu_id):
+    """Verify that a specific GPU is available and functional.
+    
+    Args:
+        gpu_id (int): GPU device ID to verify
+        
+    Returns:
+        bool: True if GPU is available and functional
+    """
+    try:
+        if not torch.cuda.is_available():
+            return False
+        
+        if gpu_id >= torch.cuda.device_count():
+            return False
+        
+        # Test GPU by creating and computing on a tensor
+        with torch.cuda.device(gpu_id):
+            test_tensor = torch.randn(100, 100, device=f'cuda:{gpu_id}')
+            result = test_tensor.sum()
+            del test_tensor, result
+            torch.cuda.empty_cache()
+            return True
+            
+    except Exception as e:
+        print(f"❌ GPU {gpu_id} verification failed: {e}")
+        return False
+
+
+def initialize_gpu_safely(gpu_id):
+    """Safely initialize a GPU with error checking and recovery.
+    
+    Args:
+        gpu_id (int): GPU device ID to initialize
+        
+    Returns:
+        bool: True if initialization successful
+    """
+    try:
+        if not verify_gpu_availability(gpu_id):
+            return False
+        
+        # Clear any existing context
+        torch.cuda.empty_cache()
+        
+        # Set device
+        torch.cuda.set_device(gpu_id)
+        
+        # Verify device was set correctly
+        current_device = torch.cuda.current_device()
+        if current_device != gpu_id:
+            print(f"⚠️  GPU {gpu_id}: Device setting failed. Expected {gpu_id}, got {current_device}")
+            return False
+        
+        print(f"✅ GPU {gpu_id}: Successfully initialized")
+        return True
+        
+    except Exception as e:
+        print(f"❌ GPU {gpu_id}: Initialization failed: {e}")
+        return False
+
+
 def process_batch_gpu(eeg_files_batch, gpu_id=0):
     """Process a batch of EEG files on a specific GPU.
     
@@ -133,41 +196,66 @@ def process_batch_gpu(eeg_files_batch, gpu_id=0):
     """
     results = []
     
+    # Pre-flight check: verify GPU is available and functional
+    if not verify_gpu_availability(gpu_id):
+        error_msg = f"✗ GPU {gpu_id}: Not available or non-functional. Batch processing aborted."
+        print(error_msg)
+        return [error_msg]
+    
+    # Initialize GPU safely
+    if not initialize_gpu_safely(gpu_id):
+        error_msg = f"✗ GPU {gpu_id}: Initialization failed. Batch processing aborted."
+        print(error_msg)
+        return [error_msg]
+    
     try:
-        # Explicitly set the CUDA device for this process
+        print(f"🚀 GPU {gpu_id}: Starting batch processing of {len(eeg_files_batch)} files")
+        
+        # Load model on specific GPU with explicit device context
+        with torch.cuda.device(gpu_id) if torch.cuda.is_available() else nullcontext():
+            model = ResNet.load_from_checkpoint(
+                os.path.join(path_chkpt, "hardmine-v5.ckpt"),
+                lr=config.LR,
+                n_channels=config.N_CHANNELS,
+            )
+            
+            # Move model to specific GPU if available
+            if torch.cuda.is_available() and gpu_id < torch.cuda.device_count():
+                model = model.cuda(gpu_id)
+                print(f"🏃 GPU {gpu_id}: Model loaded and moved to GPU")
+        
+        # Create trainer for this GPU with robust device specification
         if torch.cuda.is_available() and gpu_id < torch.cuda.device_count():
-            torch.cuda.set_device(gpu_id)
-            print(f"🔧 Setting GPU {gpu_id} for this batch")
+            trainer = pl.Trainer(
+                accelerator="gpu",
+                devices=[gpu_id],
+                fast_dev_run=False,
+                enable_progress_bar=False,
+                enable_model_summary=False,
+                logger=False,
+            )
+        else:
+            trainer = pl.Trainer(
+                accelerator="cpu",
+                devices=1,
+                fast_dev_run=False,
+                enable_progress_bar=False,
+                enable_model_summary=False,
+                logger=False,
+            )
         
-        # Load model on specific GPU
-        model = ResNet.load_from_checkpoint(
-            os.path.join(path_chkpt, "hardmine-v5.ckpt"),
-            lr=config.LR,
-            n_channels=config.N_CHANNELS,
-        )
+        # Add progress bar for this GPU's batch with proper positioning
+        pbar = tqdm(eeg_files_batch, desc=f"GPU {gpu_id}", position=gpu_id, leave=False)
         
-        # Move model to specific GPU if available
-        if torch.cuda.is_available() and gpu_id < torch.cuda.device_count():
-            model = model.cuda(gpu_id)
-        
-        # Create trainer for this GPU
-        trainer = pl.Trainer(
-            accelerator="gpu" if torch.cuda.is_available() else "cpu",
-            devices=[gpu_id] if torch.cuda.is_available() else 1,
-            fast_dev_run=False,
-            enable_progress_bar=False,
-            enable_model_summary=False,
-            logger=False,
-        )
-        
-        # Add progress bar for this GPU's batch
-        for eeg_file in tqdm(eeg_files_batch, desc=f"GPU {gpu_id}", position=gpu_id, leave=False):
+        for eeg_file in pbar:
             try:
-                # Verify we're using the correct GPU
-                if torch.cuda.is_available():
+                # Double-check GPU context before each file
+                if torch.cuda.is_available() and gpu_id < torch.cuda.device_count():
                     current_device = torch.cuda.current_device()
                     if current_device != gpu_id:
-                        print(f"⚠️  Warning: Expected GPU {gpu_id}, but using GPU {current_device}")
+                        print(f"⚠️  GPU {gpu_id}: Context drift detected! Resetting from GPU {current_device} to GPU {gpu_id}")
+                        torch.cuda.set_device(gpu_id)
+                        torch.cuda.empty_cache()
                 
                 path_eeg = os.path.join(
                     get_database_root(), "EEG", "hm_negative_eeg", eeg_file + ".mat"
@@ -249,67 +337,85 @@ def main():
     else:
         print("⚠️  No CUDA GPUs available")
     
-    # Option 1: Multi-GPU processing (recommended if you have multiple GPUs)
+        # Option 1: Multi-GPU processing (recommended if you have multiple GPUs)
     if num_gpus > 1:
         print(f"\n🚀 Using Multi-GPU processing with {num_gpus} GPUs")
         
-        # Split files among GPUs
-        files_per_gpu = len(eeg_files) // num_gpus
-        gpu_batches = []
-        
-        print(f"📁 Total files: {len(eeg_files)}, Files per GPU: {files_per_gpu}")
+        # Pre-validate all GPUs before distributing work
+        available_gpus = []
+        print("🔍 Pre-validating GPU availability...")
         
         for gpu_id in range(num_gpus):
-            start_idx = gpu_id * files_per_gpu
-            if gpu_id == num_gpus - 1:  # Last GPU gets remaining files
-                end_idx = len(eeg_files)
+            if verify_gpu_availability(gpu_id):
+                available_gpus.append(gpu_id)
+                print(f"✅ GPU {gpu_id}: Available and functional")
             else:
-                end_idx = (gpu_id + 1) * files_per_gpu
-            
-            batch_files = eeg_files[start_idx:end_idx]
-            gpu_batches.append((batch_files, gpu_id))
-            
-            print(f"🎯 GPU {gpu_id}: Processing {len(batch_files)} files (indices {start_idx}-{end_idx-1})")
+                print(f"❌ GPU {gpu_id}: Not available or non-functional - SKIPPING")
         
-        # Verify all GPUs have work
-        total_assigned = sum(len(batch) for batch, _ in gpu_batches)
-        print(f"✅ Total files assigned: {total_assigned}/{len(eeg_files)}")
-        
-        if total_assigned != len(eeg_files):
-            print(f"⚠️  Warning: File count mismatch!")
-        
-        # Process batches in parallel using threads (since each uses different GPU)
-        from concurrent.futures import ThreadPoolExecutor
-        
-        with ThreadPoolExecutor(max_workers=num_gpus) as executor:
-            future_to_gpu = {
-                executor.submit(process_batch_gpu, batch, gpu_id): gpu_id 
-                for batch, gpu_id in gpu_batches
-            }
+        if not available_gpus:
+            print("❌ No functional GPUs found! Falling back to CPU processing...")
+            num_gpus = 0  # Force fallback to CPU
+        else:
+            actual_num_gpus = len(available_gpus)
+            print(f"📊 Using {actual_num_gpus} functional GPUs out of {num_gpus} total")
             
-            all_results = []
-            completed_gpus = 0
+            # Split files among available GPUs only
+            files_per_gpu = len(eeg_files) // actual_num_gpus
+            gpu_batches = []
             
-            # Create progress bar that we can manually update
-            progress_bar = tqdm(total=num_gpus, desc="GPU Processing")
+            print(f"📁 Total files: {len(eeg_files)}, Files per GPU: {files_per_gpu}")
             
-            for future in as_completed(future_to_gpu):
-                gpu_id = future_to_gpu[future]
-                try:
-                    results = future.result()
-                    all_results.extend(results)
-                    progress_bar.set_postfix({"Completed GPU": gpu_id})
-                except Exception as e:
-                    all_results.append(f"✗ GPU {gpu_id} failed: {str(e)}")
+            for i, gpu_id in enumerate(available_gpus):
+                start_idx = i * files_per_gpu
+                if i == actual_num_gpus - 1:  # Last GPU gets remaining files
+                    end_idx = len(eeg_files)
+                else:
+                    end_idx = (i + 1) * files_per_gpu
                 
-                completed_gpus += 1
-                progress_bar.update(1)
+                batch_files = eeg_files[start_idx:end_idx]
+                gpu_batches.append((batch_files, gpu_id))
+                
+                print(f"🎯 GPU {gpu_id}: Processing {len(batch_files)} files (indices {start_idx}-{end_idx-1})")
             
-            progress_bar.close()
-        
-        # Print results
-        for result in all_results:
-            print(result)
+            # Verify all GPUs have work
+            total_assigned = sum(len(batch) for batch, _ in gpu_batches)
+            print(f"✅ Total files assigned: {total_assigned}/{len(eeg_files)}")
+            
+            if total_assigned != len(eeg_files):
+                print("⚠️  Warning: File count mismatch!")
+            
+            # Process batches in parallel using threads (since each uses different GPU)
+            from concurrent.futures import ThreadPoolExecutor
+            
+            with ThreadPoolExecutor(max_workers=actual_num_gpus) as executor:
+                future_to_gpu = {
+                    executor.submit(process_batch_gpu, batch, gpu_id): gpu_id 
+                    for batch, gpu_id in gpu_batches
+                }
+                
+                all_results = []
+                completed_gpus = 0
+                
+                # Create progress bar that we can manually update
+                progress_bar = tqdm(total=actual_num_gpus, desc="GPU Processing")
+                
+                for future in as_completed(future_to_gpu):
+                    gpu_id = future_to_gpu[future]
+                    try:
+                        results = future.result()
+                        all_results.extend(results)
+                        progress_bar.set_postfix({"Completed GPU": gpu_id})
+                    except Exception as e:
+                        all_results.append(f"✗ GPU {gpu_id} failed: {str(e)}")
+                    
+                    completed_gpus += 1
+                    progress_bar.update(1)
+                
+                progress_bar.close()
+            
+            # Print results
+            for result in all_results:
+                print(result)
     
     # Option 2: Multi-CPU processing (if no multiple GPUs available)
     elif num_cpus > 1:
