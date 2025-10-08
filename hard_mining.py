@@ -27,7 +27,7 @@ time_step = 8
 window_length = 3  # in seconds
 num_points = sampling_rate * window_length
 threshold = 0.75  # .8, 0.75, 0.5, 0.4; 1st round set at .8
-cluster_len = 8  # 10 8 5 3
+cluster_len = 3  # 10 8 5 3
 
 
 # function definition
