@@ -21,6 +21,7 @@ from tqdm import tqdm
 import torch
 from contextlib import nullcontext
 from concurrent.futures import ProcessPoolExecutor, as_completed
+import argparse
 from sleeplib.Resnet_15.model import ResNet
 from sleeplib.datasets import ContinousToSnippetDataset
 from sleeplib.config import Config
@@ -34,6 +35,9 @@ from spikenet2_lib import get_output_root, get_proj_root, get_database_root
 logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
 # load own code
 sys.path.append("../")
+
+# model checkpoint
+model_ckpt = "hardmine-v8.ckpt"
 
 # this holds all the configuration parameters
 # load config and show all default parameters
@@ -85,9 +89,11 @@ def process_single_eeg_file_cpu(args):
         from sleeplib.montages import con_combine_montage as montage_func
         from sleeplib.transforms import extremes_remover
         from torchvision import transforms
-        
+
         montage_instance = montage_func()
-        transform_local = transforms.Compose([extremes_remover(signal_max=2000, signal_min=20)])
+        transform_local = transforms.Compose(
+            [extremes_remover(signal_max=2000, signal_min=20)]
+        )
 
         Bonobo_con = ContinousToSnippetDataset(
             path_eeg,
@@ -235,7 +241,7 @@ def process_batch_gpu(eeg_files_batch, gpu_id=0):
         # Load model on specific GPU with explicit device context
         with torch.cuda.device(gpu_id) if torch.cuda.is_available() else nullcontext():
             model = ResNet.load_from_checkpoint(
-                os.path.join(path_chkpt, "hardmine-v7.ckpt"),
+                os.path.join(path_chkpt, model_ckpt),
                 lr=config.LR,
                 n_channels=config.N_CHANNELS,
             )
@@ -340,14 +346,57 @@ def process_batch_gpu(eeg_files_batch, gpu_id=0):
         return [f"✗ GPU {gpu_id}: Batch processing error: {str(e)}"]
 
 
+def parse_arguments():
+    """Parse command line arguments for processing mode selection."""
+    parser = argparse.ArgumentParser(
+        description="Parallel EEG spike detection using SpikeNet2",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Processing Modes:
+  auto         - Automatically choose best available method (default)
+                 Priority: Multi-GPU > Multi-CPU > Single device
+  multi-gpu    - Force multi-GPU processing (requires 2+ GPUs)
+  multi-cpu    - Force multi-CPU processing (uses all CPU cores)
+  single       - Force single device processing (GPU if available, else CPU)
+
+Examples:
+  python continurous_parallel.py                    # Auto mode (default)
+  python continurous_parallel.py --mode multi-gpu   # Force multi-GPU
+  python continurous_parallel.py --mode multi-cpu   # Force multi-CPU
+  python continurous_parallel.py --mode single      # Force single device
+        """,
+    )
+
+    parser.add_argument(
+        "--mode",
+        "-m",
+        choices=["auto", "multi-gpu", "multi-cpu", "single"],
+        default="auto",
+        help="Processing mode to use (default: auto)",
+    )
+
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
+
+    return parser.parse_args()
+
+
 def main():
     """Main function with multiple parallelization options."""
-    
+
+    # Parse command line arguments
+    args = parse_arguments()
+
+    if args.verbose:
+        print(f"🎯 Processing mode: {args.mode}")
+
     # Set multiprocessing start method to 'spawn' for CUDA compatibility
     try:
         import multiprocessing as mp
+
         if torch.cuda.is_available():
-            mp.set_start_method('spawn', force=True)
+            mp.set_start_method("spawn", force=True)
             print("🔧 Set multiprocessing to 'spawn' method for CUDA compatibility")
     except RuntimeError as e:
         if "context has already been set" not in str(e):
@@ -365,6 +414,7 @@ def main():
     num_cpus = os.cpu_count() or 1
 
     print(f"Available resources: {num_gpus} GPUs, {num_cpus} CPU cores")
+    print(f"Selected mode: {args.mode}")
 
     # Display GPU information if available
     if torch.cuda.is_available() and num_gpus > 0:
@@ -380,8 +430,45 @@ def main():
     else:
         print("⚠️  No CUDA GPUs available")
 
-    # Option 1: Multi-GPU processing (preferred when available)
-    if num_gpus > 1:
+    # Determine processing mode based on arguments and available resources
+    if args.mode == "auto":
+        # Auto mode: Multi-GPU > Multi-CPU > Single device
+        if num_gpus > 1:
+            processing_mode = "multi-gpu"
+            print("🤖 Auto mode selected: Multi-GPU processing")
+        elif num_cpus > 1:
+            processing_mode = "multi-cpu"
+            print("🤖 Auto mode selected: Multi-CPU processing")
+        else:
+            processing_mode = "single"
+            print("🤖 Auto mode selected: Single device processing")
+    elif args.mode == "multi-gpu":
+        if num_gpus < 2:
+            print(
+                f"❌ Error: Multi-GPU mode requires 2+ GPUs, but only {num_gpus} available"
+            )
+            print("💡 Suggestion: Use --mode auto or --mode multi-cpu")
+            return
+        processing_mode = "multi-gpu"
+        print("🎯 Forced mode: Multi-GPU processing")
+    elif args.mode == "multi-cpu":
+        if num_cpus < 2:
+            print(
+                f"❌ Error: Multi-CPU mode requires 2+ CPU cores, but only {num_cpus} available"
+            )
+            print("💡 Suggestion: Use --mode auto or --mode single")
+            return
+        processing_mode = "multi-cpu"
+        print("🎯 Forced mode: Multi-CPU processing")
+    elif args.mode == "single":
+        processing_mode = "single"
+        print("🎯 Forced mode: Single device processing")
+    else:
+        print(f"❌ Error: Unknown mode '{args.mode}'")
+        return
+
+    # Execute the selected processing mode
+    if processing_mode == "multi-gpu":
         print(f"\n🚀 Using Multi-GPU processing with {num_gpus} GPUs")
 
         # Pre-validate all GPUs before distributing work
@@ -458,15 +545,14 @@ def main():
 
                 progress_bar.close()
 
-    # Option 2: Multi-CPU processing (if no multiple GPUs available)
-    elif num_cpus > 1:
+    elif processing_mode == "multi-cpu":
         print(
             f"\n🚀 Using Multi-CPU processing with {min(num_cpus, len(eeg_files))} processes"
         )
 
         # Prepare arguments for multiprocessing
         config_dict = {
-            "checkpoint_path": os.path.join(path_chkpt, "hardmine-v7.ckpt"),
+            "checkpoint_path": os.path.join(path_chkpt, model_ckpt),
             "lr": config.LR,
             "n_channels": config.N_CHANNELS,
             "database_root": get_database_root(),
@@ -495,13 +581,12 @@ def main():
         for result in results:
             print(result)
 
-    # Option 3: Single GPU/CPU processing (fallback)
-    else:
+    elif processing_mode == "single":
         print("\n🚀 Using single device processing")
 
         # Load model
         model = ResNet.load_from_checkpoint(
-            os.path.join(path_chkpt, "hardmine-v7.ckpt"),
+            os.path.join(path_chkpt, model_ckpt),
             lr=config.LR,
             n_channels=config.N_CHANNELS,
         )
@@ -537,6 +622,7 @@ def main():
             preds = trainer.predict(model, con_dataloader)
 
             if preds is not None and len(preds) > 0:
+
                 def _to_numpy(x):
                     try:
                         if torch.is_tensor(x):
