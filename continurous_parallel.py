@@ -107,6 +107,7 @@ def process_single_eeg_file_cpu(args):
             batch_size=config_dict["batch_size"],
             shuffle=False,
             num_workers=1,  # Reduce workers per process
+            persistent_workers=True,  # Speed up dataloader worker initialization
         )
 
         preds = trainer.predict(model, con_dataloader)
@@ -302,6 +303,7 @@ def process_batch_gpu(eeg_files_batch, gpu_id=0):
                     batch_size=config.BATCH_SIZE,
                     shuffle=False,
                     num_workers=2,  # Moderate number of workers per GPU
+                    persistent_workers=True,  # Speed up dataloader worker initialization
                 )
 
                 preds = trainer.predict(model, con_dataloader)
@@ -617,6 +619,7 @@ def main():
                 batch_size=config.BATCH_SIZE,
                 shuffle=False,
                 num_workers=num_cpus // 2,
+                persistent_workers=True,  # Speed up dataloader worker initialization
             )
 
             preds = trainer.predict(model, con_dataloader)
