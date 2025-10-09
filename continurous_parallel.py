@@ -37,7 +37,7 @@ logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
 sys.path.append("../")
 
 # model checkpoint
-model_ckpt = "hardmine-v8.ckpt"
+model_ckpt = "hardmine-v9.ckpt"
 
 # this holds all the configuration parameters
 # load config and show all default parameters

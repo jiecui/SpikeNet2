@@ -90,7 +90,7 @@ for x, y in test_dataloader:
 
 # load pretrained model
 model = ResNet.load_from_checkpoint(
-    os.path.join(path_chkpt, "hardmine-v8.ckpt"),
+    os.path.join(path_chkpt, "hardmine-v9.ckpt"),
     lr=config.LR,
     n_channels=config.N_CHANNELS,
 )
@@ -141,6 +141,10 @@ ax.set_xlabel("False Positive Rate")
 ax.set_ylabel("True Positive Rate")
 ax.set_title("Receiver Operating Characteristic (ROC) Curve")
 ax.legend()
-fig.savefig(os.path.join(path_model, "ROC-v8.png"), dpi=300, bbox_inches="tight")
+fig.savefig(
+    os.path.join(path_model, "ROC-v9.png"),
+    dpi=300,
+    bbox_inches="tight",
+)
 
 # [EOF]
