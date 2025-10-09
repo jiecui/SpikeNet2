@@ -36,7 +36,7 @@ class Config:
 
     # training parameters
     BATCH_SIZE: int = 256  # test 128
-    LR: float = 5e-7  # test 1e-4
+    LR: float = 1e-5  # test 1e-4
 
     # accelerator
     DEVICES: Union[List[int], str, int] = 8 # "auto"
