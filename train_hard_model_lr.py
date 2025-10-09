@@ -57,15 +57,24 @@ def find_optimal_learning_rate_pytorch_lightning(
     """
     print("🔍 Running PyTorch Lightning Learning Rate Finder...")
 
-    # Create a temporary trainer for LR finding (single GPU to avoid issues)
-    lr_trainer = pl.Trainer(
-        devices=1,
-        accelerator="gpu" if config.DEVICES > 0 else "cpu",
-        logger=False,  # No logging for LR finding
-        enable_checkpointing=False,  # No checkpoints for LR finding
-        enable_progress_bar=True,
-        max_epochs=1,
-    )
+    # Use the same device configuration as main training to respect GPU assignment
+    accelerator = "gpu" if config.DEVICES > 0 else "cpu"
+    
+    # Create trainer configuration
+    trainer_kwargs = {
+        "devices": config.DEVICES,
+        "accelerator": accelerator,
+        "logger": False,  # No logging for LR finding
+        "enable_checkpointing": False,  # No checkpoints for LR finding
+        "enable_progress_bar": True,
+        "max_epochs": 1,
+    }
+    
+    # For multi-GPU setup, use the same strategy as main training
+    if accelerator == "gpu" and config.DEVICES > 1:
+        trainer_kwargs["strategy"] = DDPStrategy(find_unused_parameters=True)
+    
+    lr_trainer = pl.Trainer(**trainer_kwargs)
 
     # Run the learning rate finder
     print("📡 Running LR finder scan...")
