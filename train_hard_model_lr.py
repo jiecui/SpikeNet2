@@ -23,6 +23,9 @@ from pytorch_lightning.strategies import DDPStrategy
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from sleeplib.config import Config
+import torch
+import pickle
+import time
 
 # from sleeplib.Resnet_15.model import FineTuning
 from sleeplib.Resnet_15.model import ResNet
@@ -40,8 +43,54 @@ from spikenet2_lib import get_output_root
 
 
 # definition of functions
+def get_ddp_rank():
+    """Get the current DDP rank. Returns 0 if not in DDP mode."""
+    try:
+        return int(os.environ.get('LOCAL_RANK', 0))
+    except (ValueError, TypeError):
+        return 0
+
+def is_main_process():
+    """Check if this is the main process (rank 0)."""
+    return get_ddp_rank() == 0
+
+def save_lr_result(optimal_lr, path_lr):
+    """Save LR result to file for sharing between DDP processes."""
+    lr_file = os.path.join(path_lr, 'optimal_lr.pkl')
+    with open(lr_file, 'wb') as f:
+        pickle.dump(optimal_lr, f)
+    print(f"💾 Saved optimal LR {optimal_lr:.2e} to {lr_file}")
+
+def load_lr_result(path_lr, timeout=60):
+    """Load LR result from file, waiting if necessary for main process to complete."""
+    lr_file = os.path.join(path_lr, 'optimal_lr.pkl')
+    
+    # Wait for file to be created by main process
+    start_time = time.time()
+    while not os.path.exists(lr_file):
+        if time.time() - start_time > timeout:
+            raise TimeoutError(f"Timeout waiting for LR result file: {lr_file}")
+        time.sleep(1)
+        print(f"⏳ Rank {get_ddp_rank()}: Waiting for optimal LR from main process...")
+    
+    # Load the result
+    with open(lr_file, 'rb') as f:
+        optimal_lr = pickle.load(f)
+    print(f"📥 Rank {get_ddp_rank()}: Loaded optimal LR {optimal_lr:.2e} from main process")
+    return optimal_lr
+
+def cleanup_lr_result(path_lr):
+    """Clean up temporary LR result file."""
+    lr_file = os.path.join(path_lr, 'optimal_lr.pkl')
+    try:
+        if os.path.exists(lr_file):
+            os.remove(lr_file)
+            print(f"🧹 Cleaned up LR result file: {lr_file}")
+    except Exception as e:
+        print(f"⚠️ Could not clean up LR result file: {e}")
+
 def find_optimal_learning_rate_pytorch_lightning(
-    model, train_dataloader, val_dataloader, config
+    model, train_dataloader, val_dataloader, config, path_lr
 ):
     """
     Use PyTorch Lightning's built-in learning rate finder to find optimal learning rate.
@@ -52,11 +101,18 @@ def find_optimal_learning_rate_pytorch_lightning(
         train_dataloader: Training data loader
         val_dataloader: Validation data loader
         config: Configuration object
+        path_lr: Path to directory for LR finder checkpoints and plots
 
     Returns:
         suggested_lr: Suggested learning rate from LR finder
     """
-    print("🔍 Running PyTorch Lightning Learning Rate Finder (single run for all GPUs)...")
+    print(
+        "🔍 Running PyTorch Lightning Learning Rate Finder (single run for all GPUs)..."
+    )
+
+    # Ensure the LR finder directory exists
+    os.makedirs(path_lr, exist_ok=True)
+    print(f"📁 LR finder checkpoints will be saved to: {path_lr}")
 
     # Force LR finder to run on single device to avoid redundant computation
     # Even in multi-GPU setup, LR finder only needs to run once
@@ -71,6 +127,7 @@ def find_optimal_learning_rate_pytorch_lightning(
         "enable_checkpointing": False,  # No checkpoints for LR finding
         "enable_progress_bar": True,
         "max_epochs": 1,
+        "default_root_dir": path_lr,  # Set LR finder checkpoint directory
     }
 
     # No DDP strategy for LR finder - single device only
@@ -248,30 +305,44 @@ val_dataloader = DataLoader(
 
 
 # Determine learning rate once before training loop
+# Only run on main process in DDP mode to avoid redundant computation
+rank = get_ddp_rank()
+print(f"🏷️ Process rank: {rank}")
+
 if args.skip_lr_finder:
     print(f"⏭️ Skipping LR finder, using config LR: {config.LR:.2e}")
     optimal_lr = config.LR
 else:
-    # Find optimal learning rate using PyTorch Lightning's built-in LR finder
-    # This runs only ONCE regardless of number of GPUs or training iterations
-    print("\n🔍 Finding optimal learning rate (running once for all GPUs)...")
-    
-    # Create a temporary model instance just for LR finding
-    lr_finder_model = ResNet.load_from_checkpoint(
-        os.path.join(path_chkpt, old_ckpt + ".ckpt"),
-        lr=config.LR,
-        n_channels=config.N_CHANNELS,
-        Focal_loss=False,
-    )
-    
-    optimal_lr = find_optimal_learning_rate_pytorch_lightning(
-        lr_finder_model, train_dataloader, val_dataloader, config
-    )
-    
-    print(f"🎯 Optimal LR found: {optimal_lr:.2e} (will be used for all GPUs)")
-    
-    # Clean up temporary model
-    del lr_finder_model
+    if is_main_process():
+        # Main process: Find optimal learning rate
+        print("\n🔍 Main process: Finding optimal learning rate (running once for all GPUs)...")
+        
+        # Create a temporary model instance just for LR finding
+        lr_finder_model = ResNet.load_from_checkpoint(
+            os.path.join(path_chkpt, old_ckpt + ".ckpt"),
+            lr=config.LR,
+            n_channels=config.N_CHANNELS,
+            Focal_loss=False,
+        )
+        
+        optimal_lr = find_optimal_learning_rate_pytorch_lightning(
+            lr_finder_model, train_dataloader, val_dataloader, config, path_lr
+        )
+        
+        print(f"🎯 Main process: Optimal LR found: {optimal_lr:.2e}")
+        
+        # Save result for other processes
+        save_lr_result(optimal_lr, path_lr)
+        
+        # Clean up temporary model
+        del lr_finder_model
+        
+    else:
+        # Other processes: Wait for and load result from main process
+        print(f"\n⏳ Rank {rank}: Waiting for optimal LR from main process...")
+        optimal_lr = load_lr_result(path_lr)
+        
+    print(f"📋 Rank {rank}: Using optimal LR: {optimal_lr:.2e}")
 
 # If only running LR finder, exit here
 if args.lr_finder_only:
@@ -289,7 +360,7 @@ for i in range(1):
         n_channels=config.N_CHANNELS,
         Focal_loss=False,  # True means loss function will be Focal loss. Otherwise will be BCE loss
     )
-    
+
     print(f"📦 Model {i+1} loaded with optimal LR: {optimal_lr:.2e}")
 
     # create a logger
@@ -318,5 +389,9 @@ for i in range(1):
     # train the model
     trainer.fit(model, train_dataloader, val_dataloader)
     wandb.finish()
+
+# Clean up LR result file after training (only main process)
+if is_main_process():
+    cleanup_lr_result(path_lr)
 
 # [EOF]
