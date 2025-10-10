@@ -156,8 +156,8 @@ def parse_arguments():
 sys.path.append("../")
 
 # parameters
-old_ckpt = "hardmine-v9"
-new_ckpt = "hardmine-v10"
+old_ckpt = "hardmine-v10"
+new_ckpt = "hardmine-v11"
 
 
 # Parse command line arguments
