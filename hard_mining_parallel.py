@@ -591,8 +591,10 @@ def main():
 
     print(f"Copying new files from {path_round2} to {path_npy}...")
     copy_new_files(path_round2, path_npy)
+    # after copying, remove all files in path_round2
+    [os.remove(os.path.join(path_round2, f)) for f in os.listdir(path_round2)]
 
-    print("Parallel hard mining process completed successfully!")
+    print("🎉 Parallel hard mining process completed successfully!")
 
 
 if __name__ == "__main__":
