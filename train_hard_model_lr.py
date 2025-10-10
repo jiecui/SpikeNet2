@@ -45,6 +45,7 @@ def find_optimal_learning_rate_pytorch_lightning(
 ):
     """
     Use PyTorch Lightning's built-in learning rate finder to find optimal learning rate.
+    This function is designed to run ONCE and find optimal LR for all GPUs.
 
     Args:
         model: The PyTorch Lightning model
@@ -55,25 +56,24 @@ def find_optimal_learning_rate_pytorch_lightning(
     Returns:
         suggested_lr: Suggested learning rate from LR finder
     """
-    print("🔍 Running PyTorch Lightning Learning Rate Finder...")
+    print("🔍 Running PyTorch Lightning Learning Rate Finder (single run for all GPUs)...")
 
-    # Use the same device configuration as main training to respect GPU assignment
+    # Force LR finder to run on single device to avoid redundant computation
+    # Even in multi-GPU setup, LR finder only needs to run once
     accelerator = "gpu" if config.DEVICES > 0 else "cpu"
-    
-    # Create trainer configuration
+    devices = 1  # Always use single device for LR finding
+
+    # Create trainer configuration for LR finding (single device only)
     trainer_kwargs = {
-        "devices": config.DEVICES,
+        "devices": devices,
         "accelerator": accelerator,
         "logger": False,  # No logging for LR finding
         "enable_checkpointing": False,  # No checkpoints for LR finding
         "enable_progress_bar": True,
         "max_epochs": 1,
     }
-    
-    # For multi-GPU setup, use the same strategy as main training
-    if accelerator == "gpu" and config.DEVICES > 1:
-        trainer_kwargs["strategy"] = DDPStrategy(find_unused_parameters=True)
-    
+
+    # No DDP strategy for LR finder - single device only
     lr_trainer = pl.Trainer(**trainer_kwargs)
 
     # Run the learning rate finder
@@ -111,9 +111,7 @@ def find_optimal_learning_rate_pytorch_lightning(
                 try:
                     fig = lr_finder.plot(suggest=True, show=False)
                     if fig is not None:
-                        plot_path = os.path.join(
-                            get_output_root(), "models", "lr_finder_plot.png"
-                        )
+                        plot_path = os.path.join(path_lr, "lr_finder_plot.png")
                         fig.savefig(plot_path, dpi=150, bbox_inches="tight")
                         plt.close(fig)
                         print(f"📊 LR Finder plot saved to: {plot_path}")
@@ -156,8 +154,8 @@ def parse_arguments():
 sys.path.append("../")
 
 # parameters
-old_ckpt = "hardmine-v10"
-new_ckpt = "hardmine-v11"
+old_ckpt = "hardmine-v11"
+new_ckpt = "hardmine-v12"
 
 
 # Parse command line arguments
@@ -168,6 +166,7 @@ args = parse_arguments()
 path_model = os.path.join(get_output_root(), "models")
 path_chkpt = os.path.join(get_output_root(), "models", "checkpoint")
 path_npy = os.path.join(path_model, "train_hard_npy")
+path_lr = os.path.join(path_model, "lr_finder")
 
 # load config and show all default parameters
 config = Config()
@@ -248,41 +247,50 @@ val_dataloader = DataLoader(
 )
 
 
-for i in range(1):
-    # build model
-    # model = FineTuning(lr=config.LR, n_channels=37, Focal_loss=False)  # False
-    model = ResNet.load_from_checkpoint(
+# Determine learning rate once before training loop
+if args.skip_lr_finder:
+    print(f"⏭️ Skipping LR finder, using config LR: {config.LR:.2e}")
+    optimal_lr = config.LR
+else:
+    # Find optimal learning rate using PyTorch Lightning's built-in LR finder
+    # This runs only ONCE regardless of number of GPUs or training iterations
+    print("\n🔍 Finding optimal learning rate (running once for all GPUs)...")
+    
+    # Create a temporary model instance just for LR finding
+    lr_finder_model = ResNet.load_from_checkpoint(
         os.path.join(path_chkpt, old_ckpt + ".ckpt"),
         lr=config.LR,
         n_channels=config.N_CHANNELS,
+        Focal_loss=False,
+    )
+    
+    optimal_lr = find_optimal_learning_rate_pytorch_lightning(
+        lr_finder_model, train_dataloader, val_dataloader, config
+    )
+    
+    print(f"🎯 Optimal LR found: {optimal_lr:.2e} (will be used for all GPUs)")
+    
+    # Clean up temporary model
+    del lr_finder_model
+
+# If only running LR finder, exit here
+if args.lr_finder_only:
+    print("✅ Learning rate finder completed. Exiting without training.")
+    sys.exit(0)
+
+print(f"\n🚀 Starting training with optimal LR: {optimal_lr:.2e}")
+
+for i in range(1):
+    # build model with optimal learning rate (determined once above)
+    # model = FineTuning(lr=optimal_lr, n_channels=37, Focal_loss=False)  # False
+    model = ResNet.load_from_checkpoint(
+        os.path.join(path_chkpt, old_ckpt + ".ckpt"),
+        lr=optimal_lr,  # Use the optimal LR found once above
+        n_channels=config.N_CHANNELS,
         Focal_loss=False,  # True means loss function will be Focal loss. Otherwise will be BCE loss
     )
-
-    # Determine learning rate based on command line arguments
-    if args.skip_lr_finder:
-        print(f"⏭️ Skipping LR finder, using config LR: {config.LR:.2e}")
-        optimal_lr = config.LR
-    else:
-        # Find optimal learning rate using PyTorch Lightning's built-in LR finder
-        print("\n🔍 Finding optimal learning rate...")
-        optimal_lr = find_optimal_learning_rate_pytorch_lightning(
-            model, train_dataloader, val_dataloader, config
-        )
-
-        print(f"🎯 Updating model LR from {config.LR:.2e} to {optimal_lr:.2e}")
-
-        # Create new model instance with optimal learning rate
-        model = ResNet.load_from_checkpoint(
-            os.path.join(path_chkpt, old_ckpt + ".ckpt"),
-            lr=optimal_lr,
-            n_channels=config.N_CHANNELS,
-            Focal_loss=False,
-        )
-
-    # If only running LR finder, exit here
-    if args.lr_finder_only:
-        print("✅ Learning rate finder completed. Exiting without training.")
-        sys.exit(0)
+    
+    print(f"📦 Model {i+1} loaded with optimal LR: {optimal_lr:.2e}")
 
     # create a logger
     wandb.init(dir="logging")
