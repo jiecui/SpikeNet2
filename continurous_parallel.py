@@ -37,7 +37,7 @@ logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
 sys.path.append("../")
 
 # model checkpoint
-model_ckpt = "hardmine-v9.ckpt"
+model_ckpt = "hardmine-v11.ckpt"
 
 # this holds all the configuration parameters
 # load config and show all default parameters
@@ -409,7 +409,7 @@ def main():
     controls = pd.read_csv(path_controls)
     eeg_files = controls.EEG_index.tolist()
 
-    print(f"Found {len(eeg_files)} EEG files to process")
+    print(f"ℹ️️ Found {len(eeg_files)} EEG files to process")
 
     # Check available resources
     num_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
