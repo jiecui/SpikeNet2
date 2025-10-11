@@ -23,7 +23,6 @@ from pytorch_lightning.strategies import DDPStrategy
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from sleeplib.config import Config
-import torch
 import pickle
 import time
 
@@ -211,8 +210,8 @@ def parse_arguments():
 sys.path.append("../")
 
 # parameters
-old_ckpt = "hardmine-v11"
-new_ckpt = "hardmine-v12"
+old_ckpt = "hardmine-v12"
+new_ckpt = "hardmine-v13"
 
 
 # Parse command line arguments

@@ -37,7 +37,7 @@ logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
 sys.path.append("../")
 
 # model checkpoint
-model_ckpt = "hardmine-v12.ckpt"
+model_ckpt = "hardmine-v0.ckpt"
 
 # this holds all the configuration parameters
 # load config and show all default parameters
@@ -67,9 +67,10 @@ def process_batch_eeg_files_cpu_optimized(args):
         # Suppress warnings for CPU-only processing
         import warnings
         import os
-        os.environ['CUDA_VISIBLE_DEVICES'] = ''
-        warnings.filterwarnings('ignore', category=UserWarning)
-        
+
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        warnings.filterwarnings("ignore", category=UserWarning)
+
         # Load model ONCE per process (major optimization)
         if config_dict.get("verbose", False):
             print(f"Loading model for batch of {len(eeg_files_batch)} files...")
@@ -79,10 +80,12 @@ def process_batch_eeg_files_cpu_optimized(args):
             n_channels=config_dict["n_channels"],
         )
         model.eval()  # Set to evaluation mode
-        model.cpu()   # Ensure model is on CPU
+        model.cpu()  # Ensure model is on CPU
         if config_dict.get("verbose", False):
-            print(f"Model loaded successfully, processing {len(eeg_files_batch)} files...")
-        
+            print(
+                f"Model loaded successfully, processing {len(eeg_files_batch)} files..."
+            )
+
         # Process each file in the batch with the same model instance
         for eeg_file in eeg_files_batch:
             try:
@@ -90,7 +93,7 @@ def process_batch_eeg_files_cpu_optimized(args):
                 results.append(result)
             except Exception as e:
                 results.append(f"✗ Error processing {eeg_file}: {str(e)}")
-        
+
         return results
 
     except Exception as e:
@@ -101,12 +104,12 @@ def process_batch_eeg_files_cpu_optimized(args):
 
 def process_single_file_with_model(eeg_file, model, config_dict):
     """Process a single EEG file with pre-loaded model.
-    
+
     Args:
         eeg_file (str): EEG file name
         model: Pre-loaded PyTorch model
         config_dict (dict): Configuration dictionary
-        
+
     Returns:
         str: Status message
     """
@@ -143,15 +146,15 @@ def process_single_file_with_model(eeg_file, model, config_dict):
 
         # Direct inference without PyTorch Lightning
         predictions = []
-        
+
         with torch.no_grad():  # Disable gradient computation for inference
             for batch in con_dataloader:
                 signals, _ = batch
                 signals = signals.cpu()  # Ensure on CPU
-                
+
                 # Forward pass
                 logits = model(signals)
-                
+
                 # Convert to predictions
                 preds = torch.sigmoid(logits)  # Apply sigmoid for probabilities
                 predictions.append(preds.cpu().numpy())
@@ -408,12 +411,12 @@ Examples:
     parser.add_argument(
         "--verbose", "-v", action="store_true", help="Enable verbose output"
     )
-    
+
     parser.add_argument(
         "--max-cpu-workers",
         type=int,
         default=None,
-        help="Maximum number of CPU workers for multi-CPU mode (default: auto-detect)"
+        help="Maximum number of CPU workers for multi-CPU mode (default: auto-detect)",
     )
 
     return parser.parse_args()
@@ -589,9 +592,10 @@ def main():
 
         # Set multiprocessing start method to avoid conflicts
         import multiprocessing as mp
-        if mp.get_start_method(allow_none=True) != 'spawn':
+
+        if mp.get_start_method(allow_none=True) != "spawn":
             try:
-                mp.set_start_method('spawn', force=True)
+                mp.set_start_method("spawn", force=True)
             except RuntimeError:
                 pass  # Already set
 
@@ -616,60 +620,78 @@ def main():
         else:
             max_workers = min(
                 max(num_cpus - 4, 1),  # Leave 4 cores for system on high-core machines
-                len(eeg_files), 
-                32  # Increased for 48-core system - use up to 32 processes
+                len(eeg_files),
+                32,  # Increased for 48-core system - use up to 32 processes
             )
-            print(f"📊 Using {max_workers} CPU processes (optimized for {num_cpus}-core system)")
+            print(
+                f"📊 Using {max_workers} CPU processes (optimized for {num_cpus}-core system)"
+            )
 
         # Split files into batches for each process (major optimization)
         # This way each process loads the model once and processes multiple files
         files_per_process = max(1, len(eeg_files) // max_workers)
         batches = []
         for i in range(0, len(eeg_files), files_per_process):
-            batch = eeg_files[i:i + files_per_process]
+            batch = eeg_files[i : i + files_per_process]
             batches.append((batch, config_dict))
-        
-        print(f"📦 Created {len(batches)} batches, ~{files_per_process} files per batch")
+
+        print(
+            f"📦 Created {len(batches)} batches, ~{files_per_process} files per batch"
+        )
         print("🔄 Each process will load model once and process multiple files...")
-        
-        print(f"🔄 Processing {len(eeg_files)} EEG files with optimized CPU implementation...")
+
+        print(
+            f"🔄 Processing {len(eeg_files)} EEG files with optimized CPU implementation..."
+        )
 
         import time
-        
+
         start_time = time.time()
-        
+
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
             # Submit all batch tasks using optimized batch function
-            future_to_batch = {executor.submit(process_batch_eeg_files_cpu_optimized, batch_args): i 
-                             for i, batch_args in enumerate(batches)}
-            
+            future_to_batch = {
+                executor.submit(process_batch_eeg_files_cpu_optimized, batch_args): i
+                for i, batch_args in enumerate(batches)
+            }
+
             results = []
             completed_files = 0
-            
+
             # Process results as they complete with timeout
             with tqdm(total=len(eeg_files), desc="CPU Processing") as pbar:
-                for future in as_completed(future_to_batch, timeout=3600):  # 1 hour timeout
+                for future in as_completed(
+                    future_to_batch, timeout=3600
+                ):  # 1 hour timeout
                     batch_idx = future_to_batch[future]
                     try:
-                        batch_results = future.result(timeout=600)  # 10 minutes per batch
+                        batch_results = future.result(
+                            timeout=600
+                        )  # 10 minutes per batch
                         results.extend(batch_results)
                         completed_files += len(batch_results)
-                        
+
                         # Update progress with more details
                         elapsed = time.time() - start_time
                         rate = completed_files / elapsed if elapsed > 0 else 0
-                        eta = (len(eeg_files) - completed_files) / rate if rate > 0 else 0
-                        
+                        eta = (
+                            (len(eeg_files) - completed_files) / rate if rate > 0 else 0
+                        )
+
                         pbar.update(len(batch_results))
-                        pbar.set_postfix({
-                            'Rate': f'{rate:.2f} files/s',
-                            'ETA': f'{eta/60:.1f}m' if eta > 0 else 'N/A'
-                        })
-                        
+                        pbar.set_postfix(
+                            {
+                                "Rate": f"{rate:.2f} files/s",
+                                "ETA": f"{eta/60:.1f}m" if eta > 0 else "N/A",
+                            }
+                        )
+
                         # Print periodic status
                         if completed_files % 50 == 0:
-                            print(f"\n📈 Progress: {completed_files}/{len(eeg_files)} files completed")
-                            
+                            print(
+                                f"\n📈 Progress: {completed_files}/{len(eeg_files)} files completed"
+                            )
+
                     except TimeoutError:
                         error_msg = f"✗ Batch {batch_idx}: Processing timeout"
                         results.extend([error_msg] * len(batches[batch_idx][0]))

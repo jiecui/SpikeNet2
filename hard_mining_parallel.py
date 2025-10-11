@@ -137,7 +137,7 @@ class HardMiningParallel:
         self._configure_processing()
 
         if self.verbose:
-            print("HardMiningParallel initialized:")
+            print("📍 HardMiningParallel initialized:")
             print(f"  Mode: {self.actual_mode}")
             print(f"  Workers: {self.workers}")
             print(f"  CPUs: {self.num_cpus}, GPUs: {self.num_gpus}")
@@ -331,7 +331,7 @@ class HardMiningParallel:
 
         if self.verbose:
             print(
-                f"Processing {len(eeg_files)} EEG files using {self.actual_mode} mode with {self.workers} workers"
+                f"🚀 Processing {len(eeg_files)} EEG files using {self.actual_mode} mode with {self.workers} workers"
             )
 
         # Prepare arguments for parallel processing
@@ -500,7 +500,7 @@ def main():
     Main function implementing the parallel hard mining workflow.
     """
 
-    print("Hard mining controls:")
+    print("ℹ️ Hard mining controls:")
     print(
         f"Sampling Rate: {sampling_rate}, Time Step: {time_step}, Num Points: {num_points}, Threshold: {threshold}, Cluster Length: {cluster_len}, Window Length: {window_length}s"
     )
