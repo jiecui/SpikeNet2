@@ -192,17 +192,17 @@ class HardMiningParallel:
         os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
         os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 
-    def process_single_eeg(self, args: Tuple[str, str, int]) -> Dict[str, Any]:
+    def process_single_eeg(self, args: Tuple[str, str, str, int]) -> Dict[str, Any]:
         """
         Process a single EEG file for hard mining.
 
         Args:
-            args: Tuple of (eeg_file, path_round2, device_id)
+            args: Tuple of (eeg_file, path_round2, path_hard_mine, device_id)
 
         Returns:
             Dictionary with processing results
         """
-        eeg_file, path_round2, device_id = args
+        eeg_file, path_round2, path_hard_mine, device_id = args
 
         # Initialize device
         device = "cpu"
@@ -217,7 +217,7 @@ class HardMiningParallel:
 
             # Read CSV prediction
             csv_file = f"{eeg_file}.csv"
-            csv_path = os.path.join(get_output_root(), "models", "hard_mine", csv_file)
+            csv_path = os.path.join(path_hard_mine, csv_file)
 
             if not os.path.exists(csv_path):
                 return {
@@ -315,7 +315,7 @@ class HardMiningParallel:
         return chunks
 
     def process_parallel(
-        self, train_controls: pd.DataFrame, path_round2: str
+        self, train_controls: pd.DataFrame, path_round2: str, path_hard_mine: str
     ) -> List[Dict[str, Any]]:
         """
         Process EEG files in parallel for hard mining.
@@ -323,6 +323,7 @@ class HardMiningParallel:
         Args:
             train_controls: DataFrame with EEG_index column
             path_round2: Output path for hard mining results
+            path_hard_mine: Path containing CSV prediction files for hard mining
 
         Returns:
             List of processing results
@@ -334,16 +335,17 @@ class HardMiningParallel:
                 f"🚀 Processing {len(eeg_files)} EEG files using {self.actual_mode} mode with {self.workers} workers"
             )
 
-        # Prepare arguments for parallel processing
         if self.actual_mode == "gpu":
             # Distribute files across available GPUs
             args_list = []
             for i, eeg_file in enumerate(eeg_files):
                 device_id = i % self.num_gpus
-                args_list.append((eeg_file, path_round2, device_id))
+                args_list.append((eeg_file, path_round2, path_hard_mine, device_id))
         else:
             # CPU/threading mode - device_id not used
-            args_list = [(eeg_file, path_round2, 0) for eeg_file in eeg_files]
+            args_list = [
+                (eeg_file, path_round2, path_hard_mine, 0) for eeg_file in eeg_files
+            ]
 
         results = []
 
@@ -512,6 +514,7 @@ def main():
     # Set paths
     path_model = os.path.join(get_output_root(), "models")
     path_round2 = os.path.join(path_model, "hardmine_npy_round2")
+    path_hard_mine = os.path.join(path_model, "hard_mine")
 
     # Create output directory
     os.makedirs(path_round2, exist_ok=True)
@@ -533,7 +536,7 @@ def main():
 
     # Process files in parallel
     start_time = time.time()
-    results = processor.process_parallel(train_controls, path_round2)
+    results = processor.process_parallel(train_controls, path_round2, path_hard_mine)
     end_time = time.time()
 
     # Print summary
@@ -593,6 +596,8 @@ def main():
     copy_new_files(path_round2, path_npy)
     # after copying, remove all files in path_round2
     [os.remove(os.path.join(path_round2, f)) for f in os.listdir(path_round2)]
+    # remove all files in path_model/hard_mine
+    [os.remove(os.path.join(path_hard_mine, f)) for f in os.listdir(path_hard_mine)]
 
     print("🎉 Parallel hard mining process completed successfully!")
 
