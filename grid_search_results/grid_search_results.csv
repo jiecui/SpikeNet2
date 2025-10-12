@@ -1,0 +1,2 @@
+threshold,cluster_len,hard_mining_success,training_success,val_loss,runtime_seconds,timestamp
+0.8,5,True,False,,650.7052969932556,2025-10-11T13:32:36.328953
