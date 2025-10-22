@@ -90,7 +90,7 @@ for x, y in test_dataloader:
 
 # load pretrained model
 model = ResNet.load_from_checkpoint(
-    os.path.join(path_chkpt, "hardmine-v13.ckpt"),
+    os.path.join(path_chkpt, "sn2_new_weights.ckpt"),
     lr=config.LR,
     n_channels=config.N_CHANNELS,
 )
@@ -123,6 +123,7 @@ frac_filter = (df["fraction_of_yes"] >= 6 / 8) | (df["fraction_of_yes"] <= 2 / 8
 
 # load samples as defined in spikenet paper
 AUC_df = df[ultra_quality_filter & mode_filter & frac_filter]
+# AUC_df = df[high_quality_filter & mode_filter & frac_filter] 
 
 labels = AUC_df.fraction_of_yes.values.round(0).astype(int)
 
@@ -142,7 +143,7 @@ ax.set_ylabel("True Positive Rate")
 ax.set_title("Receiver Operating Characteristic (ROC) Curve")
 ax.legend()
 fig.savefig(
-    os.path.join(path_model, "ROC-v13.png"),
+    os.path.join(path_model, "sn2-ROC-new_weights.png"),
     dpi=300,
     bbox_inches="tight",
 )

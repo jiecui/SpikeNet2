@@ -21,6 +21,8 @@ class Config:
     # 'your_path' is the path of your project
     PATH_FILES_BONOBO: str = os.path.join(get_output_root(), "Events", "real_npy")
     PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "lut_labelled_20230628.csv")
+    # PATH_FILES_BONOBO: str = os.path.join(get_output_root(), "Events", "scalp_npy")
+    # PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "scalp_labelled_10212025.csv")
     PATH_CONTINOUS_EEG: str = os.path.join(
         get_database_root(), "EEG", "hm_negative_eeg"
     )
