@@ -1,7 +1,7 @@
 # evaluation model performance
 
 # 2025 Richard J. Cui. Modified: Fri 09/19/2025 03:06:14.957544 PM
-# $Revision: 0.1 $  $Date: Fri 09/19/2025 03:06:14.957544 PM $
+# $Revision: 0.2 $  $Date: Sat 11/15/2025 01:07:47.712936 AM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -90,7 +90,7 @@ for x, y in test_dataloader:
 
 # load pretrained model
 model = ResNet.load_from_checkpoint(
-    os.path.join(path_chkpt, "sn2_new_weights.ckpt"),
+    os.path.join(path_chkpt, config.MODEL_CHECKPOINT),
     lr=config.LR,
     n_channels=config.N_CHANNELS,
 )
