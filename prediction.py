@@ -1,7 +1,7 @@
 # evaluation model performance
 
 # 2025 Richard J. Cui. Modified: Fri 09/19/2025 03:06:14.957544 PM
-# $Revision: 0.2 $  $Date: Sat 11/15/2025 01:07:47.712936 AM $
+# $Revision: 0.3 $  $Date: Thu 11/20/2025 03:38:46.997832 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -90,7 +90,7 @@ for x, y in test_dataloader:
 
 # load pretrained model
 model = ResNet.load_from_checkpoint(
-    os.path.join(path_chkpt, config.MODEL_CHECKPOINT),
+    os.path.join(path_chkpt, config.MODEL_CHECKPOINT+".ckpt"),
     lr=config.LR,
     n_channels=config.N_CHANNELS,
 )
@@ -143,7 +143,7 @@ ax.set_ylabel("True Positive Rate")
 ax.set_title("Receiver Operating Characteristic (ROC) Curve")
 ax.legend()
 fig.savefig(
-    os.path.join(path_model, "sn2-ROC-new_weights.png"),
+    os.path.join(path_model, "scalp-ROC-" + config.MODEL_CHECKPOINT + ".png"),
     dpi=300,
     bbox_inches="tight",
 )

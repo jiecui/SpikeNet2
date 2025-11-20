@@ -1,7 +1,7 @@
 # config.py
 
 # 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.4 $  $Date: Thu 10/02/2025 02:28:14.352718 PM $
+# $Revision: 0.5 $  $Date: Thu 11/20/2025 03:38:46.997832 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -19,10 +19,12 @@ class Config:
 
     # Data params
     # 'your_path' is the path of your project
-    PATH_FILES_BONOBO: str = os.path.join(get_output_root(), "Events", "real_npy")
-    PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "lut_labelled_20230628.csv")
+    # PATH_FILES_BONOBO: str = os.path.join(get_output_root(), "Events", "real_npy")
+    # PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "lut_labelled_20230628.csv")
     # PATH_FILES_BONOBO: str = os.path.join(get_output_root(), "Events", "scalp_npy")
     # PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "scalp_labelled_10212025.csv")
+    PATH_FILES_BONOBO: str = os.path.join(get_output_root(), "Events", "scalp_11202025_npy")
+    PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "scalp_labelled_11202025.csv")
     PATH_CONTINOUS_EEG: str = os.path.join(
         get_database_root(), "EEG", "hm_negative_eeg"
     )
@@ -34,6 +36,7 @@ class Config:
     WINDOWSIZE: int = 1  # 2 seconds (cut length of EEG signals)
 
     # Model parameters
+    MODEL_CHECKPOINT: str = "sn2_new_weights"
     N_CHANNELS: int = 37  # 19+18
 
     # training parameters
