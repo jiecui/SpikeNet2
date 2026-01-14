@@ -1,7 +1,7 @@
 # evaluation model performance
 
-# 2025 Richard J. Cui. Modified: Fri 09/19/2025 03:06:14.957544 PM
-# $Revision: 0.3 $  $Date: Thu 11/20/2025 03:38:46.997832 PM $
+# 2025-2026 Richard J. Cui. Modified: Fri 09/19/2025 03:06:14.957544 PM
+# $Revision: 0.4 $  $Date: Wed 01/14/2026 04:31:02.957777 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -101,7 +101,8 @@ trainer = pl.Trainer(
 )
 
 # predict all samples
-preds = trainer.predict(model, test_dataloader)
+# preds = trainer.predict(model, test_dataloader)
+preds = np.array(trainer.predict(model, test_dataloader))
 preds = np.concatenate(preds)  # seems OK
 
 # store results
@@ -136,8 +137,8 @@ roc_auc = auc(fpr, tpr)
 fig, ax = plt.subplots(figsize=(4, 4))
 ax.plot(fpr, tpr, label="ROC curve (AUC = %0.4f)" % roc_auc)
 ax.plot([0, 1], [0, 1], linestyle="--")
-ax.set_xlim([0, 1])
-ax.set_ylim([0, 1])
+ax.set_xlim(0, 1)
+ax.set_ylim(0, 1)
 ax.set_xlabel("False Positive Rate")
 ax.set_ylabel("True Positive Rate")
 ax.set_title("Receiver Operating Characteristic (ROC) Curve")
