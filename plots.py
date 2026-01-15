@@ -32,7 +32,12 @@ def run_visualization(model: ResNet, input_signal: torch.Tensor) -> None:
 
     # 2. Find the target layer
     # Your ResNet wraps 'Net1D' in 'self.model'
-    target_layer = find_last_conv_layer(model.model)
+    # target_layer = find_last_conv_layer(model.model)
+    target_layer = [
+        m
+        for m in model.model.modules()
+        if isinstance(m, torch.nn.Conv1d) and m.kernel_size[0] > 1
+    ][-1] # last Conv1d with kernel_size > 1
 
     if target_layer is None:
         print("Error: No Conv1d layer found.")
@@ -51,13 +56,17 @@ def run_visualization(model: ResNet, input_signal: torch.Tensor) -> None:
     heatmap = grad_cam(input_signal)
 
     # 6. Plotting
-    # We plot the first channel of the signal against the heatmap
-    signal_data = input_signal.detach().numpy()[0, 0, :]  # Channel 0
+    # imshow the input_signal and overlay the heatmap
+    signal_data = input_signal.detach().numpy().squeeze()
+    # normalize signal for better visualization
+    signal_data = (signal_data - np.min(signal_data)) / (
+        np.max(signal_data) - np.min(signal_data)
+    )
 
     plt.figure(figsize=(12, 5))
 
     # Plot Signal
-    plt.plot(signal_data, label="Input Signal (Lead 0)", color="black", alpha=0.5)
+    plt.imshow(signal_data, aspect="auto", cmap="gray", alpha=0.7)
 
     # Plot Heatmap (Overlay)
     # We map the heatmap to the range of the signal for better visualization
@@ -69,6 +78,7 @@ def run_visualization(model: ResNet, input_signal: torch.Tensor) -> None:
 
     plt.title("Grad-CAM: Feature Importance")
     plt.show()
+    plt.savefig("test.png")
 
     # Clean up hooks
     grad_cam.remove_hooks()
@@ -114,41 +124,23 @@ class GradCAM1D:
             x: Input tensor of shape (1, n_channels, length)
         """
         # 1. Forward Pass
+        device = next(self.model.parameters()).device
+        x = x.to(device)
+        x.requires_grad = True
+
         self.model.eval()
         self.model.zero_grad()
+        with torch.set_grad_enabled(True):
+            # Get model prediction
+            logits = self.model(x)
 
-        # We need the input to require grad to ensure backprop chain is valid
-        # though strictly we only need weights grad, being explicit helps debugging
-        if x.dim() == 2:
-            x = x.unsqueeze(0)  # Ensure batch dimension
-
-        # Get model prediction
-        logits = self.model(x)
-
-        # 2. Select Target Score
-        # Your model has n_classes=1 (Binary/Regression).
-        # The output is shape (1, 1) or (1,).
-        # We simply backpropagate the scalar output itself.
-        # If logits is (Batch, 1), we select the 0th element.
-        score = logits[0] if logits.dim() > 0 else logits
-
-        # 3. Backward Pass
-        score.backward()
+            score = logits.squeeze()
+            # 3. Backward Pass
+            score.backward()
 
         # 4. Generate Heatmap
-        # gradients shape: (1, Filters, Length)
-        # activations shape: (1, Filters, Length)
-
-        gradients = self.gradients
-        activations = self.activations
-
-        # Global Average Pooling of gradients (over time dimension 2)
-        # This gives us the "importance" (alpha) of each feature map
-        weights = torch.mean(gradients, dim=2, keepdim=True)
-
-        # Weighted combination of feature maps
-        # (1, Filters, Length) * (1, Filters, 1)
-        cam = torch.sum(weights * activations, dim=1)
+        weights = self.gradients.mean(dim=2, keepdim=True)  # (1, K, 1)
+        cam = (weights * self.activations).sum(dim=1)  # (1, T')
 
         # Apply ReLU (we are only interested in features that have a positive influence)
         cam = F.relu(cam)
