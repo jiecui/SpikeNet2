@@ -18,12 +18,7 @@ def find_last_conv_layer(module):
     Helper to automatically find the last nn.Conv1d layer in your Net1D model.
     Grad-CAM usually works best on the very last convolutional layer.
     """
-    last_conv = None
-    for name, sub_mod in module.named_modules():
-        if isinstance(sub_mod, torch.nn.Conv1d):
-            last_conv = sub_mod
-    return last_conv
-
+    return module.stage_list[-1].block_list[-1].conv3
 
 def run_visualization(model: ResNet, input_signal: torch.Tensor) -> None:
     # 1. Initialize your model
@@ -32,12 +27,7 @@ def run_visualization(model: ResNet, input_signal: torch.Tensor) -> None:
 
     # 2. Find the target layer
     # Your ResNet wraps 'Net1D' in 'self.model'
-    # target_layer = find_last_conv_layer(model.model)
-    target_layer = [
-        m
-        for m in model.model.modules()
-        if isinstance(m, torch.nn.Conv1d) and m.kernel_size[0] > 1
-    ][-1] # last Conv1d with kernel_size > 1
+    target_layer = find_last_conv_layer(model.model)
 
     if target_layer is None:
         print("Error: No Conv1d layer found.")
