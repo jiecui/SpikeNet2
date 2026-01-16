@@ -26,7 +26,7 @@ def run_visualization(model: ResNet, input_signal: torch.Tensor) -> None:
     # (In practice, you would load from a checkpoint)
     # model = ResNet.load_from_checkpoint("path/to/checkpoint.ckpt", ...)
     model.eval()
-    
+
     # 2. Find the target layer
     # Your ResNet wraps 'Net1D' in 'self.model'
     target_layer = find_last_conv_layer(model.model)
@@ -38,14 +38,15 @@ def run_visualization(model: ResNet, input_signal: torch.Tensor) -> None:
     print(f"Applying Grad-CAM on layer: {target_layer}")
 
     # 3. Create the Grad-CAM object
-    grad_cam = GradCAM1D(model, target_layer)
+    with torch.enable_grad():
+        grad_cam = GradCAM1D(model, target_layer)
 
     # 4. Create a dummy input (or load real data)
     # Shape: (Batch=1, Channels=37, Length=1000)
     # input_signal = torch.randn(1, 37, 1000, requires_grad=True)
 
     # 5. Run Grad-CAM
-    heatmap = grad_cam(input_signal)
+        heatmap = grad_cam(input_signal)
 
     # 6. Plotting
     # imshow the input_signal and overlay the heatmap
@@ -108,32 +109,33 @@ class GradCAM1D:
         Args:
             x: Input tensor of shape (1, n_channels, length)
         """
-        # 1. Forward Pass
-        output = self.model(x)
+        # Move to device and enable gradients
+        x = x.to(self.model.device)
+        x.requires_grad = True
 
-        # In your model, output is sigmoid [batch, 1]
-        # We backpropagate through the logit (or sigmoid result)
+        # Forward pass
         self.model.zero_grad()
-        output.backward()
+        output = self.model(x)  # shape: [1, 1]
 
-        # Weight the channels by the gradients
-        # gradients shape: [batch, channels, length]
+        # Backprop from scalar
+        score = output[:, 0]
+        print("output.requires_grad =", output.requires_grad)
+        score.backward()
+
+        # gradients: [batch, channels, length]
         weights = torch.mean(self.gradients, dim=2, keepdim=True)
 
-        # Calculate Grad-CAM
+        # Grad-CAM
         cam = torch.sum(weights * self.activations, dim=1, keepdim=True)
-
-        # Apply ReLU to keep only positive influences
         cam = F.relu(cam)
 
-        # Resize to match original input length
+        # Resize to input length
         cam = F.interpolate(cam, size=x.shape[2], mode="linear", align_corners=False)
 
-        # Normalize between 0 and 1
+        # Normalize
         cam_min, cam_max = cam.min(), cam.max()
         cam = (cam - cam_min) / (cam_max - cam_min + 1e-8)
 
-        # Return flattened numpy array
         return cam.detach().cpu().numpy()[0, 0, :]
 
     def remove_hooks(self):
