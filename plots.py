@@ -1,5 +1,12 @@
 # plots for SpikeNet2
 
+# 2026 Richard J. Cui. Modified: Fri 01/16/2026 03:19:02.190139 PM
+# $Revision: 0.1 $  $Date: Fri 01/16/2026 03:19:02.190139 PM $
+#
+# Mayo Clinic Foundation
+# Rochester, MN 55901, USA
+#
+# Email: Cui.Jie@mayo.edu
 # ==========================================================================
 # Imports libraries
 # ==========================================================================
@@ -37,20 +44,15 @@ def run_visualization(model: ResNet, input_signal: torch.Tensor) -> None:
 
     print(f"Applying Grad-CAM on layer: {target_layer}")
 
-    # 3. Create the Grad-CAM object
     with torch.enable_grad():
+        # 3. Create the Grad-CAM object
         grad_cam = GradCAM1D(model, target_layer)
-
-    # 4. Create a dummy input (or load real data)
-    # Shape: (Batch=1, Channels=37, Length=1000)
-    # input_signal = torch.randn(1, 37, 1000, requires_grad=True)
-
-    # 5. Run Grad-CAM
+        # 4. Run Grad-CAM
         heatmap = grad_cam(input_signal)
 
-    # 6. Plotting
+    # 4. Plotting
     # imshow the input_signal and overlay the heatmap
-    signal_data = input_signal.detach().numpy().squeeze()
+    signal_data = input_signal.cpu().detach().numpy().squeeze()
     # normalize signal for better visualization
     signal_data = (signal_data - np.min(signal_data)) / (
         np.max(signal_data) - np.min(signal_data)
@@ -71,7 +73,7 @@ def run_visualization(model: ResNet, input_signal: torch.Tensor) -> None:
 
     plt.title("Grad-CAM: Feature Importance")
     plt.show()
-    plt.savefig("test.png")
+    # plt.savefig("test.png")
 
     # Clean up hooks
     grad_cam.remove_hooks()
@@ -104,29 +106,35 @@ class GradCAM1D:
         self.hooks.append(self.target_layer.register_forward_hook(forward_hook))
         self.hooks.append(self.target_layer.register_full_backward_hook(backward_hook))
 
-    def __call__(self, x, target_class=1):
+    def __call__(self, x):
         """
         Args:
             x: Input tensor of shape (1, n_channels, length)
         """
         # Move to device and enable gradients
-        x = x.to(self.model.device)
         x.requires_grad = True
 
         # Forward pass
         self.model.zero_grad()
-        output = self.model(x)  # shape: [1, 1]
+        output = self.model(x)  # shape: [1, 1], binary classification
 
         # Backprop from scalar
-        score = output[:, 0]
-        print("output.requires_grad =", output.requires_grad)
+        score = output[0]
         score.backward()
 
         # gradients: [batch, channels, length]
-        weights = torch.mean(self.gradients, dim=2, keepdim=True)
+        # Validate that hooks captured data
+        if self.gradients is None or self.activations is None:
+            raise RuntimeError("Hooks did not capture gradients or activations")
+        # weights = torch.mean(self.gradients, dim=2, keepdim=True) # global average pooling [batch, channels, 1]
 
-        # Grad-CAM
-        cam = torch.sum(weights * self.activations, dim=1, keepdim=True)
+        # Use per-time gradients directly:
+        weights = self.gradients  # Keep all [batch, channels, length] information
+
+        # temporal Grad-CAM
+        cam = torch.sum(
+            weights * self.activations, dim=1, keepdim=True
+        )  # [batch, 1, length]
         cam = F.relu(cam)
 
         # Resize to input length
@@ -136,7 +144,7 @@ class GradCAM1D:
         cam_min, cam_max = cam.min(), cam.max()
         cam = (cam - cam_min) / (cam_max - cam_min + 1e-8)
 
-        return cam.detach().cpu().numpy()[0, 0, :]
+        return cam.cpu().detach().numpy()[0, 0, :]
 
     def remove_hooks(self):
         for hook in self.hooks:
