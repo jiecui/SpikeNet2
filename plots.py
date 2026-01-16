@@ -20,11 +20,13 @@ def find_last_conv_layer(module):
     """
     return module.stage_list[-1].block_list[-1].conv3
 
+
 def run_visualization(model: ResNet, input_signal: torch.Tensor) -> None:
     # 1. Initialize your model
     # (In practice, you would load from a checkpoint)
     # model = ResNet.load_from_checkpoint("path/to/checkpoint.ckpt", ...)
-
+    model.eval()
+    
     # 2. Find the target layer
     # Your ResNet wraps 'Net1D' in 'self.model'
     target_layer = find_last_conv_layer(model.model)
@@ -88,65 +90,52 @@ class GradCAM1D:
         self.target_layer = target_layer
         self.gradients = None
         self.activations = None
+        self.hooks = []
+        self._register_hooks()
 
-        # Register hooks
-        # These hooks save the activations during forward pass
-        # and gradients during backward pass
-        self.handle_fwd = self.target_layer.register_forward_hook(self.save_activation)
-        self.handle_bwd = self.target_layer.register_full_backward_hook(
-            self.save_gradient
-        )
+    def _register_hooks(self):
+        def forward_hook(module, input, output):
+            self.activations = output
 
-    def save_activation(self, module, input, output):
-        self.activations = output
+        def backward_hook(module, grad_input, grad_output):
+            self.gradients = grad_output[0]
 
-    def save_gradient(self, module, grad_input, grad_output):
-        # grad_output is usually a tuple, we want the first element
-        self.gradients = grad_output[0]
+        self.hooks.append(self.target_layer.register_forward_hook(forward_hook))
+        self.hooks.append(self.target_layer.register_full_backward_hook(backward_hook))
 
-    def remove_hooks(self):
-        self.handle_fwd.remove()
-        self.handle_bwd.remove()
-
-    def __call__(self, x):
+    def __call__(self, x, target_class=1):
         """
         Args:
             x: Input tensor of shape (1, n_channels, length)
         """
         # 1. Forward Pass
-        device = next(self.model.parameters()).device
-        x = x.to(device)
-        x.requires_grad = True
+        output = self.model(x)
 
-        self.model.eval()
+        # In your model, output is sigmoid [batch, 1]
+        # We backpropagate through the logit (or sigmoid result)
         self.model.zero_grad()
-        with torch.set_grad_enabled(True):
-            # Get model prediction
-            logits = self.model(x)
+        output.backward()
 
-            score = logits.squeeze()
-            # 3. Backward Pass
-            score.backward()
+        # Weight the channels by the gradients
+        # gradients shape: [batch, channels, length]
+        weights = torch.mean(self.gradients, dim=2, keepdim=True)
 
-        # 4. Generate Heatmap
-        weights = self.gradients.mean(dim=2, keepdim=True)  # (1, K, 1)
-        cam = (weights * self.activations).sum(dim=1)  # (1, T')
+        # Calculate Grad-CAM
+        cam = torch.sum(weights * self.activations, dim=1, keepdim=True)
 
-        # Apply ReLU (we are only interested in features that have a positive influence)
+        # Apply ReLU to keep only positive influences
         cam = F.relu(cam)
 
-        # Normalize to 0-1 range for visualization
-        cam = cam - torch.min(cam)
-        cam = cam / (torch.max(cam) + 1e-7)
+        # Resize to match original input length
+        cam = F.interpolate(cam, size=x.shape[2], mode="linear", align_corners=False)
 
-        # 5. Upsample to original input size
-        # We use 1D interpolation (linear)
-        # Input cam is (1, Length_feature), we need (1, Length_original)
-        target_length = x.shape[2]
-
-        # Interpolate expects (Batch, Channels, Length)
-        cam = cam.unsqueeze(1)
-        cam = F.interpolate(cam, size=target_length, mode="linear", align_corners=False)
+        # Normalize between 0 and 1
+        cam_min, cam_max = cam.min(), cam.max()
+        cam = (cam - cam_min) / (cam_max - cam_min + 1e-8)
 
         # Return flattened numpy array
-        return cam.squeeze().detach().cpu().numpy()
+        return cam.detach().cpu().numpy()[0, 0, :]
+
+    def remove_hooks(self):
+        for hook in self.hooks:
+            hook.remove()
