@@ -1,7 +1,7 @@
 # evaluation model performance
 
 # 2025-2026 Richard J. Cui. Modified: Fri 09/19/2025 03:06:14.957544 PM
-# $Revision: 0.5 $  $Date: Fri 01/16/2026 03:19:02.190139 PM $
+# $Revision: 0.6 $  $Date: Mon 01/19/2026 22:50:21.054374 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -100,18 +100,17 @@ model = ResNet.load_from_checkpoint(
     map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
 )
 
-# test grad-cam on a sample
-for x, y in test_dataloader:
-    with torch.no_grad():
-        sample_idx = 1
-        print(f"Running Grad-CAM on {sample_idx+1}th sample.")
-        run_visualization(
-            model,
-            x[sample_idx, :, :].unsqueeze(0).to(model.device),
-        )  # one sample in the batch
-        break
+# # test grad-cam on a sample
+# for x, y in test_dataloader:
+#     with torch.no_grad():
+#         sample_idx = 1
+#         print(f"Running Grad-CAM on {sample_idx+1}th sample.")
+#         run_visualization(
+#             model,
+#             x[sample_idx, :, :].unsqueeze(0).to(model.device),
+#         )  # one sample in the batch
+#         break
 
-# map_location=torch.device('cpu') add this if running on CPU machine
 # init trainer
 trainer = pl.Trainer(
     devices=1, accelerator="gpu", fast_dev_run=False, enable_progress_bar=False
