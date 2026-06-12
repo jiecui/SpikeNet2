@@ -1,7 +1,7 @@
 # Library for Spikenet2
 
-# 2025 Richard J. Cui. Created: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.4 $  $Date: Fri 10/03/2025 07:52:45.867114 PM $
+# 2025-2026 Richard J. Cui. Created: Fri 09/12/2025 04:16:14.055411 PM
+# $Revision: 0.5 $  $Date: Fri 06/12/2026 12:05:32.141 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -90,7 +90,7 @@ def get_output_root():
     elif host_name == "bnel-lambda1" or host_name == "bnel-lambda2":  # MSEL lab servers
         return os.path.join(
             "/mnt",
-            "Hydrogen",
+            "Helium",
             "richard",
             "Documents",
             "Richard",
