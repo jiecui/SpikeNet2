@@ -1,7 +1,7 @@
 # config.py
 
 # 2025 Richard J. Cui. Modified: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.5 $  $Date: Thu 11/20/2025 03:38:46.997832 PM $
+# $Revision: 0.7 $  $Date: Thu 07/30/2026 12:18:14.990589 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -9,27 +9,30 @@
 # Email: Cui.Jie@mayo.edu
 
 import os
-from typing import List, Union
 from dataclasses import dataclass
+
 from spikenet2_lib import get_database_root, get_output_root, get_proj_root
 
 
 @dataclass
 class Config:
-
     # Data params
+    # -----------
     # 'your_path' is the path of your project
-    # PATH_FILES_BONOBO: str = os.path.join(get_output_root(), "Events", "real_npy")
-    # PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "lut_labelled_20230628.csv")
-    # PATH_FILES_BONOBO: str = os.path.join(get_output_root(), "Events", "scalp_npy")
-    # PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "scalp_labelled_10212025.csv")
-    PATH_FILES_BONOBO: str = os.path.join(get_output_root(), "Events", "scalp_11202025_npy")
-    PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "scalp_labelled_11202025.csv")
+    # * SpikeNet2 dataset
+    PATH_FILES_BONOBO: str = os.path.join(get_output_root(), "Events", "real_npy")
+    PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "lut_labelled_20230628.csv")
     PATH_CONTINOUS_EEG: str = os.path.join(
         get_database_root(), "EEG", "hm_negative_eeg"
     )
 
-    FQ: int = 128  # Hz
+    # * Mayo Clinic scalp EEG dataset
+    # PATH_FILES_BONOBO: str = os.path.join(get_output_root(), "Events", "scalp_npy")
+    # PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "scalp_labelled_10212025.csv")
+    # PATH_FILES_BONOBO: str = os.path.join( get_output_root(), "Events", "scalp_11202025_npy")
+    # PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "scalp_labelled_11202025.csv")
+
+    FQ: int = 128  # sampling frequency (Hz)
 
     # Preprocessing
     MONTAGE: str = "combine"
@@ -41,10 +44,10 @@ class Config:
 
     # training parameters
     BATCH_SIZE: int = 256  # test 128
-    LR: float = 1e-5*8  # test 1e-4
+    LR: float = 1e-5 * 8  # test 1e-4
 
     # accelerator
-    DEVICES: Union[List[int], str, int] = 8 # "auto"
+    DEVICES: list[int] | str | int = 1  # "auto"
 
     def print_config(self):
         print("THIS CONFIG FILE CONTAINS THE FOLLOWING PARAMETERS :\n")
