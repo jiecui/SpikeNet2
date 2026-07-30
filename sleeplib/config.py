@@ -11,7 +11,7 @@
 import os
 from dataclasses import dataclass
 
-from spikenet2_lib import get_database_root, get_output_root, get_proj_root
+from spikenet2_lib import get_database_root, get_proj_root
 
 
 @dataclass
@@ -20,16 +20,16 @@ class Config:
     # -----------
     # 'your_path' is the path of your project
     # * SpikeNet2 dataset
-    PATH_FILES_BONOBO: str = os.path.join(get_output_root(), "Events", "real_npy")
+    PATH_FILES_BONOBO: str = os.path.join(get_database_root(), "Events", "real_npy")
     PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "lut_labelled_20230628.csv")
     PATH_CONTINOUS_EEG: str = os.path.join(
         get_database_root(), "EEG", "hm_negative_eeg"
     )
 
     # * Mayo Clinic scalp EEG dataset
-    # PATH_FILES_BONOBO: str = os.path.join(get_output_root(), "Events", "scalp_npy")
+    # PATH_FILES_BONOBO: str = os.path.join(get_database_root(), "Events", "scalp_npy")
     # PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "scalp_labelled_10212025.csv")
-    # PATH_FILES_BONOBO: str = os.path.join( get_output_root(), "Events", "scalp_11202025_npy")
+    # PATH_FILES_BONOBO: str = os.path.join(get_database_root(), "Events", "scalp_11202025_npy")
     # PATH_LUT_BONOBO: str = os.path.join(get_proj_root(), "scalp_labelled_11202025.csv")
 
     FQ: int = 128  # sampling frequency (Hz)
@@ -39,7 +39,7 @@ class Config:
     WINDOWSIZE: int = 1  # 2 seconds (cut length of EEG signals)
 
     # Model parameters
-    MODEL_CHECKPOINT: str = "sn2_new_weights"
+    MODEL_CHECKPOINT: str = "hardmine-v0"
     N_CHANNELS: int = 37  # 19+18
 
     # training parameters
@@ -48,6 +48,9 @@ class Config:
 
     # accelerator
     DEVICES: list[int] | str | int = 1  # "auto"
+
+    # number of workers for DataLoader
+    NUM_WORKERS: int = os.cpu_count() or 0  # os.cpu_count() or 1, 0 for windows
 
     def print_config(self):
         print("THIS CONFIG FILE CONTAINS THE FOLLOWING PARAMETERS :\n")

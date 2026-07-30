@@ -1,13 +1,11 @@
-from torch.nn import BCELoss, CrossEntropyLoss
-from pytorch_lightning import LightningModule
 import torch
-import numpy as np
+from lightning.pytorch import LightningModule
+from torch.nn import BCELoss
+
+from .losses import WeightedFocalLoss
 
 # "." allows to import from the same directory
 from .net1d import Net1D
-from .heads import RegressionHead
-from .losses import WeightedFocalLoss
-import torch.nn.functional as F
 
 
 class ResNet(LightningModule):
