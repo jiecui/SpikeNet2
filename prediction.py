@@ -13,18 +13,22 @@
 #     name: python3
 # ---
 
-# %%
-# evaluation model performance
+# %% [markdown]
+# # Evaluation of model performance
 
+# %%
 # 2025-2026 Richard J. Cui. Modified: Fri 09/19/2025 03:06:14.957544 PM
-# $Revision: 0.7 $  $Date: Wed 07/29/2026 04:52:14.850569 PM $
+# $Revision: 0.8 $  $Date: Thu 07/30/2026 12:18:14.990589 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
 #
 # Email: Cui.Jie@mayo.edu
 
-# imports
+# %% [markdown]
+# ## Import libraries
+
+# %%
 import os
 import sys
 
@@ -55,15 +59,17 @@ from spikenet2_lib import get_output_root
 # load own code
 sys.path.append("../")
 
-# this holds all the configuration parameters
+# %% [markdown]
+# ## Main
 
-# main
-# path_model = "your_path/SpikeNet2/Models/spikenet2/"
+# %% [markdown]
+# ### Load config file
 
-# load config file
+# %%
 config = Config()
 config.print_config()
 
+# %%
 # load dataset
 # df = pd.read_csv("your_path.csv", sep=",")  # ; -> ,
 df = pd.read_csv(config.PATH_LUT_BONOBO, sep=";")  # ; -> ,
