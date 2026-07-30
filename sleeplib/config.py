@@ -39,7 +39,9 @@ class Config:
     WINDOWSIZE: int = 1  # 2 seconds (cut length of EEG signals)
 
     # Model parameters
-    MODEL_CHECKPOINT: str = "hardmine-v0"
+    MODEL_CHECKPOINT: str = (
+        "hardmine-v0"  # "sn2_without_hardmine_weights"  # "sn2_new_weights"
+    )
     N_CHANNELS: int = 37  # 19+18
 
     # training parameters

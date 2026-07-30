@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-from sklearn.metrics import auc, roc_curve
+from sklearn.metrics import auc, precision_recall_curve, roc_curve
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
@@ -150,6 +150,7 @@ results["preds"] = preds
 # -------------------
 path_preds = os.path.join(path_model, "predictions.csv")
 results.to_csv(path_preds, index=False)
+print(f"🎉 Predictions saved to {path_preds}")
 
 # %% [markdown]
 # ### Performance evaluation
@@ -179,7 +180,7 @@ print(
 labels = AUC_df.fraction_of_yes.values.round(0).astype(int)
 preds = AUC_df.preds
 
-# calculate ROC and ROC-AUC
+# * calculate ROC and ROC-AUC
 fpr, tpr, thresholds = roc_curve(labels, preds)
 roc_auc = auc(fpr, tpr)
 
@@ -193,9 +194,34 @@ ax.set_xlabel("False Positive Rate")
 ax.set_ylabel("True Positive Rate")
 ax.set_title("Receiver Operating Characteristic (ROC) Curve")
 ax.legend()
+roc_fname = "ROC-" + config.MODEL_CHECKPOINT + ".pdf"
 fig.savefig(
-    os.path.join(path_model, "ROC-" + config.MODEL_CHECKPOINT + ".pdf"),
+    os.path.join(path_model, roc_fname),
     bbox_inches="tight",
 )
+print(f"ℹ️ ROC curve saved to {os.path.join(path_model, roc_fname)}")
+
+# * calculate precision-recall curve (PRC) and AUC
+precision, recall, thresholds = precision_recall_curve(labels, preds)
+prc_auc = auc(recall, precision)
+
+# plot PRC
+prevalence = len(spike_df) / len(AUC_df)
+fig, ax = plt.subplots(figsize=(4, 4))
+ax.plot(recall, precision, label=f"PRC curve (AUC = {prc_auc:0.4f})")
+ax.plot([0, 1], [prevalence, prevalence], linestyle="--", label="Prevalence")
+ax.set_xlim(0, 1)
+ax.set_ylim(0, 1)
+ax.set_xlabel("Recall")
+ax.set_ylabel("Precision")
+ax.set_title("Precision-Recall Curve")
+ax.legend()
+prc_fname = "PRC-" + config.MODEL_CHECKPOINT + ".pdf"
+fig.savefig(
+    os.path.join(path_model, prc_fname),
+    bbox_inches="tight",
+)
+print(f"ℹ️ PRC curve saved to {os.path.join(path_model, prc_fname)}")
+
 
 # [EOF]
