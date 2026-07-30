@@ -1,7 +1,23 @@
+# ---
+# jupyter:
+#   jupytext:
+#     formats: ipynb,py:percent
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.19.1
+#   kernelspec:
+#     display_name: SpikeNet2
+#     language: python
+#     name: python3
+# ---
+
+# %%
 # evaluation model performance
 
 # 2025-2026 Richard J. Cui. Modified: Fri 09/19/2025 03:06:14.957544 PM
-# $Revision: 0.6 $  $Date: Mon 01/19/2026 22:50:21.054374 PM $
+# $Revision: 0.7 $  $Date: Wed 07/29/2026 04:52:14.850569 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -10,21 +26,21 @@
 
 # imports
 import os
-import torch
 import sys
-import pandas as pd
+
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pytorch_lightning as pl
-from sklearn.metrics import roc_curve, auc
+import torch
+from sklearn.metrics import auc, roc_curve
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
+from sleeplib.config import Config
+
 # from pytorch_lightning.callbacks import modelcheckpoint
 from sleeplib.datasets import BonoboDataset
-from sleeplib.Resnet_15.model import ResNet
-from sleeplib.transforms import cut_and_jitter, extremes_remover
-from sleeplib.config import Config
 from sleeplib.montages import (
     # CDAC_bipolar_montage,
     # CDAC_common_average_montage,
@@ -32,8 +48,9 @@ from sleeplib.montages import (
     # con_combine_montage,
     # con_ECG_combine_montage,
 )
+from sleeplib.Resnet_15.model import ResNet
+from sleeplib.transforms import cut_and_jitter, extremes_remover
 from spikenet2_lib import get_output_root
-from plots import run_visualization
 
 # load own code
 sys.path.append("../")
@@ -99,17 +116,6 @@ model = ResNet.load_from_checkpoint(
     n_channels=config.N_CHANNELS,
     map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
 )
-
-# # test grad-cam on a sample
-# for x, y in test_dataloader:
-#     with torch.no_grad():
-#         sample_idx = 1
-#         print(f"Running Grad-CAM on {sample_idx+1}th sample.")
-#         run_visualization(
-#             model,
-#             x[sample_idx, :, :].unsqueeze(0).to(model.device),
-#         )  # one sample in the batch
-#         break
 
 # init trainer
 trainer = pl.Trainer(

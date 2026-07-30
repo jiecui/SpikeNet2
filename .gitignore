@@ -36,6 +36,7 @@ gcp-vscode-ssh/
 *.json
 .Rhistory
 Thumbs.db
+*.ipynb
 
 # project related
 *.code-workspace
