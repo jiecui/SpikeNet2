@@ -8,7 +8,7 @@
 __pycache__/
 *.png
 .DS_Store
-.ipynb_checkpoints
+.ipynb_checkpoints/
 checkpoint
 logs/*
 tf_logs/*
@@ -37,6 +37,7 @@ gcp-vscode-ssh/
 .Rhistory
 Thumbs.db
 *.ipynb
+predictions.csv
 
 # project related
 *.code-workspace
