@@ -32,10 +32,10 @@
 import os
 import sys
 
+import lightning.pytorch as pl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pytorch_lightning as pl
 import torch
 from sklearn.metrics import auc, roc_curve
 from torch.utils.data import DataLoader
@@ -69,26 +69,32 @@ sys.path.append("../")
 config = Config()
 config.print_config()
 
+# %% [markdown]
+# ### Load dataset
+
 # %%
-# load dataset
-# df = pd.read_csv("your_path.csv", sep=",")  # ; -> ,
+# dataset
+# -------
+# * data
 df = pd.read_csv(config.PATH_LUT_BONOBO, sep=";")  # ; -> ,
+
+# * data choices
+# data type
+test_filter = df["Mode"] == "Test"  # "Train", "Test", "Val"
+# data selection
+test_df = df[test_filter]  # total test samples
+
+# %% [markdown]
+# ### Model prediction
+
+# %%
+# model path and checkpoint
+# -------------------------
 path_model = os.path.join(get_output_root(), "models")
 path_chkpt = os.path.join(path_model, "checkpoint")
 
-# fraction filter
-frac_filter = (df["fraction_of_yes"] >= 6 / 8) | (df["fraction_of_yes"] <= 2 / 8)
-spike_filter = df["fraction_of_yes"] >= 6 / 8
-mode_filter = df["Mode"] == "Test"  # "Train" "Test" "Val"
-extreme_quality_filter = df["total_votes_received"] >= 8
-quality_filter = df["total_votes_received"] >= 2
-
-test_df = df[mode_filter]
-AUC_df = df[extreme_quality_filter & mode_filter & frac_filter]
-spike_df = df[extreme_quality_filter & mode_filter & spike_filter]
-print(f"there are {len(AUC_df)} test samples")
-print(f"there are {len(spike_df)} spike")
 # set up dataloader to predict all samples in test dataset
+# --------------------------------------------------------
 transform_val = transforms.Compose(
     [
         cut_and_jitter(windowsize=config.WINDOWSIZE, max_offset=0, Fq=config.FQ),
@@ -106,14 +112,10 @@ test_dataset = BonoboDataset(
 )
 test_dataloader = DataLoader(
     test_dataset,
-    batch_size=32,
+    batch_size=config.BATCH_SIZE,
     shuffle=False,
-    num_workers=0,  # os.cpu_count() or 1, 0 for windows
+    num_workers=config.NUM_WORKERS,  # os.cpu_count() or 1, 0 for windows
 )
-for x, y in test_dataloader:
-    with torch.no_grad():
-        print(x.shape)
-        break
 
 # load pretrained model
 model = ResNet.load_from_checkpoint(
@@ -125,12 +127,17 @@ model = ResNet.load_from_checkpoint(
 
 # init trainer
 trainer = pl.Trainer(
-    devices=1, accelerator="gpu", fast_dev_run=False, enable_progress_bar=False
+    devices=config.DEVICES,
+    accelerator="gpu",
+    fast_dev_run=False,
+    enable_progress_bar=False,
 )
 
-# predict all samples
-# preds = trainer.predict(model, test_dataloader)
-preds = np.array(trainer.predict(model, test_dataloader))
+# predict all test samples
+# ------------------------
+preds = trainer.predict(model, test_dataloader)
+if preds is None:
+    raise ValueError("No predictions were made. Check the model and dataloader.")
 preds = np.concatenate(preds)  # seems OK
 
 # store results
@@ -139,31 +146,46 @@ results = test_df[
 ].copy()
 results["preds"] = preds
 
-results.to_csv(path_model + "/predictions.csv", index=False)
+# save results to csv
+# -------------------
+path_preds = os.path.join(path_model, "predictions.csv")
+results.to_csv(path_preds, index=False)
 
-# auc
-df = pd.read_csv(path_model + "/predictions.csv")
+# %% [markdown]
+# ### Performance evaluation
 
-# set up filters for datasets
-high_quality_filter = df["total_votes_received"] >= 2
+# %%
+# load results for performance evaluation
+# ---------------------------------------
+df = pd.read_csv(path_preds)
+
+# vote fraction (ration of yes votes)
+spike_filter = df["fraction_of_yes"] >= 6 / 8
+nonspike_filter = df["fraction_of_yes"] <= 2 / 8
+AUC_filter = spike_filter | nonspike_filter
+# vote quality (number of votes received)
 ultra_quality_filter = df["total_votes_received"] >= 8
-mode_filter = df["Mode"] == "Test"  # "Train" "Test" "Val"
-frac_filter = (df["fraction_of_yes"] >= 6 / 8) | (df["fraction_of_yes"] <= 2 / 8)
+# test samples for performance evaluation
+AUC_df = df[ultra_quality_filter & AUC_filter]
+spike_df = df[ultra_quality_filter & spike_filter]
+print(f"{len(AUC_df)} out of {len(test_df)} test samples used for AUC evaluation.")
+print(
+    f"There are {len(spike_df)} spike and {len(AUC_df) - len(spike_df)} non-spike samples."
+)
 
-# load samples as defined in spikenet paper
-AUC_df = df[ultra_quality_filter & mode_filter & frac_filter]
-# AUC_df = df[high_quality_filter & mode_filter & frac_filter]
-
+# plots
+# -----
+# get the labels of ground truth and predictions
 labels = AUC_df.fraction_of_yes.values.round(0).astype(int)
-
 preds = AUC_df.preds
-# calculate ROC and AUC
+
+# calculate ROC and ROC-AUC
 fpr, tpr, thresholds = roc_curve(labels, preds)
 roc_auc = auc(fpr, tpr)
 
 # plot ROC
 fig, ax = plt.subplots(figsize=(4, 4))
-ax.plot(fpr, tpr, label="ROC curve (AUC = %0.4f)" % roc_auc)
+ax.plot(fpr, tpr, label=f"ROC curve (AUC = {roc_auc:0.4f}")
 ax.plot([0, 1], [0, 1], linestyle="--")
 ax.set_xlim(0, 1)
 ax.set_ylim(0, 1)
@@ -172,8 +194,7 @@ ax.set_ylabel("True Positive Rate")
 ax.set_title("Receiver Operating Characteristic (ROC) Curve")
 ax.legend()
 fig.savefig(
-    os.path.join(path_model, "scalp-ROC-" + config.MODEL_CHECKPOINT + ".png"),
-    dpi=300,
+    os.path.join(path_model, "ROC-" + config.MODEL_CHECKPOINT + ".pdf"),
     bbox_inches="tight",
 )
 
