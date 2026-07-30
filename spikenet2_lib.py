@@ -1,7 +1,7 @@
 # Library for Spikenet2
 
 # 2025-2026 Richard J. Cui. Created: Fri 09/12/2025 04:16:14.055411 PM
-# $Revision: 0.5 $  $Date: Fri 06/12/2026 12:05:32.141 PM $
+# $Revision: 0.6 $  $Date: Thu 07/30/2026 12:37:02.207963 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -40,8 +40,8 @@ def copy_new_files(source_dir, dest_dir):
 
             try:
                 shutil.copy2(source_file, dest_file)
-            except Exception as e:
-                print(f"  Error copying {filename}: {str(e)}")
+            except OSError as e:
+                print(f"⚠️ Error copying {filename}: {e!s}")
     else:
         print("No new files to copy.")
 
@@ -69,11 +69,7 @@ def get_database_root():
             "Datasets",
             "spikenet2_datasets",
         )
-    elif host_name == "bnel-lambda1":  # MSEL lab servers
-        return os.path.join(
-            "/home", "richard", "Documents", "Richard", "Datasets", "spikenet2_datasets"
-        )
-    elif host_name == "bnel-lambda2":  # MSEL lab servers
+    elif host_name == "bnel-lambda1" or host_name == "bnel-lambda2":  # MSEL lab servers
         return os.path.join(
             "/mnt", "eplab", "Personal", "Richard", "Datasets", "spikenet2_datasets"
         )
