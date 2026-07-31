@@ -86,7 +86,7 @@ prediction.ipynb
 
 ## Citation
 
-If you found our work useful in your research, please consider citing our works at:
+If you found the work useful in your research, please consider citing the paper as:
 
 >
 >```bibtex
