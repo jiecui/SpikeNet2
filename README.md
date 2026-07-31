@@ -1,13 +1,13 @@
 # SpikeNet2
 
-This is the official implementation of our paper "Expert-Level Detection of Epilepsy Markers in EEG on Short and Long Timescales".
+This is a fork of the official implementation of the paper "Expert-Level Detection of Epilepsy Markers in EEG on Short and Long Timescales".
 
 ## Dependencies
 
 To clone all files:
 
 ```bash
-git clone https://github.com/bdsp-core/SpikeNet2.git
+git clone https://github.com/jiecui/SpikeNet2.git
 ```
 
 To install Python dependencies:
@@ -24,7 +24,7 @@ You can find the data here: [Spikenet-2](https://bdsp.io/content/spikenet2/1.0/)
 
 ## Model weights
 
-The trained model checkpoints are hosted with the dataset on S3 (credentialed access via the bdsp.io project above):
+The trained model checkpoints are hosted with the dataset on S3 (credentialed access via the `bdsp.io` project above):
 
 ```bash
 s3://bdsp-opendata-restricted/spikenet2/Models/new_weights.ckpt                     # final model
@@ -37,22 +37,22 @@ Download `new_weights.ckpt` and point the checkpoint path in the prediction/loca
 
 See [`REPRODUCE.md`](REPRODUCE.md) and [`DATA_SOURCE.md`](DATA_SOURCE.md).
 
-- **Localization figure/results — no download needed (verified 2026-07-07).** `2_localization.ipynb` regenerates the spike-localization figure and per-class AUCs (0.91 / 0.85 / 0.83 / 0.81) directly from the committed `conbine_localization_predictions.csv`.
-- **Full pipeline (detection figures, e.g. ROC):** download the EEG data + `new_weights.ckpt`, run `1_calculate_local_predictions.ipynb` / `prediction.ipynb` → `predictions.csv` → figures.
+* **Localization figure/results — no download needed (verified 2026-07-07).** `2_localization.ipynb` regenerates the spike-localization figure and per-class AUCs (0.91 / 0.85 / 0.83 / 0.81) directly from the committed `conbine_localization_predictions.csv`.
+* **Full pipeline (detection figures, e.g. ROC):** download the EEG data + `new_weights.ckpt`, run `1_calculate_local_predictions.ipynb` / `prediction.ipynb` → `predictions.csv` → figures.
 
 ## Preparation
 
-First, you need to download the EEG data above. Then run the Jupyter notebook to transfer the '.mat' files into '.npy' files.
+First, you need to download the EEG data above. Then run the Jupyter notebook to transfer the `.mat` files into `.npy` files.
 
 ```bash
 transfer_data.ipynb
 ```
 
-Next, configure your file '/sleeplib/config.py'. Fill in your path into 'your_path'.
+Next, configure your file `/sleeplib/config.py`. Fill in your path into `your_path`.
 
 ## Running Training
 
-Run the following command to perform initial training of SpikeNet2.  
+Run the following command to perform initial training of `SpikeNet2`.  
 
 ```bash
 python train_initial_model.py
@@ -87,8 +87,9 @@ prediction.ipynb
 ## Citation
 
 If you found our work useful in your research, please consider citing our works at:
+
 >
-> ```bibtex
+>```bibtex
 >@article{li2025expert,
 >  title={Expert-Level Detection of Epilepsy Markers in EEG on Short and Long Timescales},
 >  author={Li, Jun and Goldenholz, Daniel M and Alkofer, Moritz and Sun, Chenxi and Nascimento, Fabio A and Halford, Jonathan J and Dean, Brian C and Galanti, Mattia and Struck, Aaron F and Greenblatt, Adam S and others},
@@ -99,4 +100,5 @@ If you found our work useful in your research, please consider citing our works 
 >  year={2025},
 >  publisher={Massachusetts Medical Society}
 >}
-> ```
+>```
+>
