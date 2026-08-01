@@ -81,7 +81,7 @@ python train_hard_model.py
 If you want to check the model performance, please run the code
 
 ```bash
-prediction.ipynb
+python prediction.py
 ```
 
 ## Citation
