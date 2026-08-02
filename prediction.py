@@ -18,7 +18,7 @@
 
 # %%
 # 2025-2026 Richard J. Cui. Modified: Fri 09/19/2025 03:06:14.957544 PM
-# $Revision: 0.8 $  $Date: Thu 07/30/2026 12:18:14.990589 PM $
+# $Revision: 0.8 $  $Date: Sun 08/02/2026 12:23:28.669593 AM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -61,6 +61,12 @@ sys.path.append("../")
 
 # %% [markdown]
 # ## Main
+
+# %% [markdown]
+# ### Parameters
+
+# %%
+quality = "high"  # "ultra"
 
 # %% [markdown]
 # ### Load config file
@@ -165,10 +171,15 @@ spike_filter = df["fraction_of_yes"] >= 6 / 8
 nonspike_filter = df["fraction_of_yes"] <= 2 / 8
 AUC_filter = spike_filter | nonspike_filter
 # vote quality (number of votes received)
-ultra_quality_filter = df["total_votes_received"] >= 8
+if quality == "high":
+    quality_filter = df["total_votes_received"] >= 2
+elif quality == "ultra":
+    quality_filter = df["total_votes_received"] >= 8
+else:
+    raise ValueError("Invalid quality level. Choose 'high' or 'ultra'.")
 # test samples for performance evaluation
-AUC_df = df[ultra_quality_filter & AUC_filter]
-spike_df = df[ultra_quality_filter & spike_filter]
+AUC_df = df[quality_filter & AUC_filter]
+spike_df = df[quality_filter & spike_filter]
 print(f"{len(AUC_df)} out of {len(test_df)} test samples used for AUC evaluation.")
 print(
     f"There are {len(spike_df)} spike and {len(AUC_df) - len(spike_df)} non-spike samples."
