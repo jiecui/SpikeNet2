@@ -18,7 +18,7 @@
 
 # %%
 # 2025-2026 Richard J. Cui. Modified: Fri 09/19/2025 03:06:14.957544 PM
-# $Revision: 0.8 $  $Date: Sun 08/02/2026 12:23:28.669593 AM $
+# $Revision: 0.9 $  $Date: Mon 08/03/2026 11:42:41.785907 AM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -217,10 +217,15 @@ precision, recall, thresholds = precision_recall_curve(labels, preds)
 prc_auc = auc(recall, precision)
 
 # plot PRC
-prevalence = len(spike_df) / len(AUC_df)
+prevalence = float(np.mean(labels))  # prevalence = P(y=1)
 fig, ax = plt.subplots(figsize=(4, 4))
 ax.plot(recall, precision, label=f"PRC curve (AUC = {prc_auc:0.4f})")
-ax.plot([0, 1], [prevalence, prevalence], linestyle="--", label="Prevalence")
+ax.plot(
+    [0, 1],
+    [prevalence, prevalence],
+    linestyle="--",
+    label=f"Prevalence ({prevalence:0.4f})",
+)
 ax.set_xlim(0, 1)
 ax.set_ylim(0, 1)
 ax.set_xlabel("Recall")
