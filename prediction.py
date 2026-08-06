@@ -33,15 +33,13 @@ import os
 import sys
 
 import lightning.pytorch as pl
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-from sklearn.metrics import auc, precision_recall_curve, roc_curve
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from plots import plot_roc_auc
+from plots import plot_prc_auc, plot_roc_auc
 from sleeplib.config import Config
 
 # from pytorch_lightning.callbacks import modelcheckpoint
@@ -196,32 +194,9 @@ preds = AUC_df.preds
 roc_fname = "ROC-" + config.MODEL_CHECKPOINT + ".pdf"
 plot_roc_auc(labels, preds, path_model, roc_fname, config=config)
 
-# * calculate precision-recall curve (PRC) and AUC
-precision, recall, thresholds = precision_recall_curve(labels, preds)
-prc_auc = auc(recall, precision)
-
-# plot PRC
-prevalence = float(np.mean(labels))  # prevalence = P(y=1)
-fig, ax = plt.subplots(figsize=(4, 4))
-ax.plot(recall, precision, label=f"PRC curve (AUC = {prc_auc:0.4f})")
-ax.plot(
-    [0, 1],
-    [prevalence, prevalence],
-    linestyle="--",
-    label=f"Prevalence ({prevalence:0.4f})",
-)
-ax.set_xlim(0, 1)
-ax.set_ylim(0, 1)
-ax.set_xlabel("Recall")
-ax.set_ylabel("Precision")
-ax.set_title("Precision-Recall Curve")
-ax.legend()
+# * plot PRC
 prc_fname = "PRC-" + config.MODEL_CHECKPOINT + ".pdf"
-fig.savefig(
-    os.path.join(path_model, prc_fname),
-    bbox_inches="tight",
-)
-print(f"ℹ️ PRC curve saved to {os.path.join(path_model, prc_fname)}")
+plot_prc_auc(labels, preds, path_model, prc_fname, config=config)
 
 
 # [EOF]

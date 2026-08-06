@@ -26,6 +26,48 @@ from sleeplib.Resnet_15.model import ResNet
 # ==========================================================================
 # Define functions
 # ==========================================================================
+def plot_prc_auc(
+    y_true: np.ndarray,
+    y_scores: np.ndarray,
+    path_save: str,
+    fig_name: str,
+    config: Config | None = None,
+) -> None:
+    """Plot and save a Precision-Recall curve with fixed [0, 1] axis limits.
+
+    Args:
+        y_true: Ground-truth binary labels.
+        y_scores: Predicted scores or probabilities.
+        path_save: Directory to save the figure.
+        fig_name: Base file name (without extension).
+        config: Configuration object containing model settings (default: None).
+    """
+    precision, recall, _ = precision_recall_curve(y_true, y_scores)
+    prc_auc = auc(recall, precision)
+    prevalence = float(np.mean(y_true))
+
+    # plot PRC curve
+    # --------------
+    fig, ax = plt.subplots(figsize=(4, 4))
+    ax.plot(
+        recall, precision, color="darkorange", label=f"PRC curve (AUC = {prc_auc:0.4f})"
+    )
+    ax.axhline(
+        y=prevalence,
+        color="navy",
+        linestyle="--",
+        label=f"Prevalence ({prevalence:.4f})",
+    )
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    ax.set_title("Precision-Recall Curve")
+    ax.legend(loc="best")
+    fig.savefig(os.path.join(path_save, fig_name), dpi=300)
+    print(f"ℹ️ PRC curve saved to {os.path.join(path_save, fig_name)}")
+
+
 def plot_roc_auc(
     y_true: np.ndarray,
     y_scores: np.ndarray,
@@ -58,12 +100,9 @@ def plot_roc_auc(
     ax.axhline(y=0.8, color="c", linewidth=0.2)
     ax.set_xlabel("False Positive Rate")
     ax.set_ylabel("True Positive Rate")
-    ax.set_title("Receiver Operating Characteristic (ROC) Curve")
+    ax.set_title("Receiver Operating Characteristic Curve")
     ax.legend(loc="best")
-    fig.savefig(
-        os.path.join(path_save, fig_name),
-        bbox_inches="tight",
-    )
+    fig.savefig(os.path.join(path_save, fig_name), dpi=300)
     print(f"ℹ️ ROC curve saved to {os.path.join(path_save, fig_name)}")
 
 
