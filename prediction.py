@@ -39,7 +39,7 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from plots import plot_prc_auc, plot_roc_auc
+from plots import plot_f1_f2_scores, plot_prc_auc, plot_roc_auc
 from sleeplib.config import Config
 
 # from pytorch_lightning.callbacks import modelcheckpoint
@@ -160,6 +160,9 @@ print(f"🎉 Predictions saved to {path_preds}")
 # %% [markdown]
 # ### Performance evaluation
 
+# %% [markdown]
+# #### Dataset for performance evaluation
+
 # %%
 # load results for performance evaluation
 # ---------------------------------------
@@ -184,19 +187,33 @@ print(
     f"There are {len(spike_df)} spike and {len(AUC_df) - len(spike_df)} non-spike samples."
 )
 
-# plots
-# -----
 # get the labels of ground truth and predictions
 labels = AUC_df.fraction_of_yes.values.round(0).astype(int)
 preds = AUC_df.preds
 
-# * plot ROC
+
+# %% [markdown]
+# #### ROC
+
+# %%
 roc_fname = "ROC-" + config.MODEL_CHECKPOINT + ".pdf"
-plot_roc_auc(labels, preds, path_model, roc_fname, config=config)
+plot_roc_auc(labels, preds, path_model, roc_fname)
 
-# * plot PRC
+
+# %% [markdown]
+# #### PRC
+
+# %%
 prc_fname = "PRC-" + config.MODEL_CHECKPOINT + ".pdf"
-plot_prc_auc(labels, preds, path_model, prc_fname, config=config)
+plot_prc_auc(labels, preds, path_model, prc_fname)
 
 
+# %% [markdown]
+# #### F1/F2 
+
+# %%
+f12_fname = "F1_F2-" + config.MODEL_CHECKPOINT + ".pdf"
+plot_f1_f2_scores(labels, preds, path_model, f12_fname)
+
+# %%
 # [EOF]

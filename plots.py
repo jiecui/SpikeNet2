@@ -17,21 +17,66 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn.functional as F
-from sklearn.metrics import auc, precision_recall_curve, roc_curve
+from sklearn.metrics import (
+    auc,
+    f1_score,
+    fbeta_score,
+    precision_recall_curve,
+    roc_curve,
+)
 
-from sleeplib.config import Config
 from sleeplib.Resnet_15.model import ResNet
 
 
 # ==========================================================================
 # Define functions
 # ==========================================================================
+def plot_f1_f2_scores(
+    y_true: np.ndarray,
+    y_scores: np.ndarray,
+    path_save: str,
+    fig_name: str,
+    threshold: float = 0.5,
+) -> None:
+    """Plot F1 and F2 scores computed from thresholded prediction scores.
+
+    Args:
+        y_true: Ground-truth binary labels.
+        y_scores: Predicted scores or probabilities.
+        path_save: Directory to save the figure.
+        fig_name: Base file name (without extension).
+        threshold: Score threshold used to convert predictions to labels.
+    """
+    y_true = np.asarray(y_true).astype(int)
+    y_pred = (np.asarray(y_scores) >= threshold).astype(int)
+    f1 = float(f1_score(y_true, y_pred))
+    f2 = float(fbeta_score(y_true, y_pred, beta=2))
+    score_values = np.asarray([f1, f2], dtype=float)
+
+    plt.figure(figsize=(4, 4))
+    bars = plt.bar(["F1", "F2"], score_values, color=["darkorange", "navy"], width=0.6)
+    plt.ylim([0.0, 1.0])
+    plt.margins(x=0.25, y=0)
+    plt.ylabel("Score")
+    plt.title(f"F1/F2 Scores (threshold = {threshold:.2f})")
+    for bar, value in zip(bars, score_values):
+        value = float(value)
+        plt.text(
+            bar.get_x() + bar.get_width() / 2,
+            value + 0.02,
+            f"{value:.4f}",
+            ha="center",
+            va="bottom",
+        )
+    plt.savefig(os.path.join(path_save, fig_name), dpi=300)
+    print("saved F1/F2 figure to:", os.path.join(path_save, fig_name))
+
+
 def plot_prc_auc(
     y_true: np.ndarray,
     y_scores: np.ndarray,
     path_save: str,
     fig_name: str,
-    config: Config | None = None,
 ) -> None:
     """Plot and save a Precision-Recall curve with fixed [0, 1] axis limits.
 
@@ -40,7 +85,6 @@ def plot_prc_auc(
         y_scores: Predicted scores or probabilities.
         path_save: Directory to save the figure.
         fig_name: Base file name (without extension).
-        config: Configuration object containing model settings (default: None).
     """
     precision, recall, _ = precision_recall_curve(y_true, y_scores)
     prc_auc = auc(recall, precision)
@@ -73,7 +117,6 @@ def plot_roc_auc(
     y_scores: np.ndarray,
     path_save: str,
     fig_name: str,
-    config: Config | None = None,
 ) -> None:
     """Plot and save a ROC curve with fixed [0, 1] axis limits.
 
@@ -82,10 +125,7 @@ def plot_roc_auc(
         y_scores: Predicted scores or probabilities.
         path_save: Directory to save the figure.
         fig_name: Base file name (without extension).
-        config: Configuration object containing model settings (default: None).
     """
-    if config is None:
-        config = Config()
     fpr, tpr, _ = roc_curve(y_true, y_scores)
     roc_auc = auc(fpr, tpr)
 
