@@ -1,7 +1,7 @@
 # plots for SpikeNet2
 
 # 2026 Richard J. Cui. Modified: Fri 01/16/2026 03:19:02.190139 PM
-# $Revision: 0.1 $  $Date: Fri 01/16/2026 03:19:02.190139 PM $
+# $Revision: 0.2 $  $Date: Thu 08/06/2026 12:21:38.835437 PM $
 #
 # Mayo Clinic Foundation
 # Rochester, MN 55901, USA
@@ -11,16 +11,62 @@
 # ==========================================================================
 # Imports libraries
 # ==========================================================================
+import os
+
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn.functional as F
-import numpy as np
-import matplotlib.pyplot as plt
+from sklearn.metrics import auc, precision_recall_curve, roc_curve
+
+from sleeplib.config import Config
 from sleeplib.Resnet_15.model import ResNet
 
 
 # ==========================================================================
 # Define functions
 # ==========================================================================
+def plot_roc_auc(
+    y_true: np.ndarray,
+    y_scores: np.ndarray,
+    path_save: str,
+    fig_name: str,
+    config: Config | None = None,
+) -> None:
+    """Plot and save a ROC curve with fixed [0, 1] axis limits.
+
+    Args:
+        y_true: Ground-truth binary labels.
+        y_scores: Predicted scores or probabilities.
+        path_save: Directory to save the figure.
+        fig_name: Base file name (without extension).
+        config: Configuration object containing model settings (default: None).
+    """
+    if config is None:
+        config = Config()
+    fpr, tpr, _ = roc_curve(y_true, y_scores)
+    roc_auc = auc(fpr, tpr)
+
+    # plot ROC curve
+    # --------------
+    fig, ax = plt.subplots(figsize=(4, 4))
+    ax.plot(fpr, tpr, color="darkorange", label=f"ROC curve (AUC = {roc_auc:0.4f})")
+    ax.plot([0, 1], [0, 1], color="navy", linestyle="--")
+    ax.set_xlim(0.0, 1.0)
+    ax.set_ylim(0, 1)
+    ax.axvline(x=0.5, color="c", linewidth=0.2)
+    ax.axhline(y=0.8, color="c", linewidth=0.2)
+    ax.set_xlabel("False Positive Rate")
+    ax.set_ylabel("True Positive Rate")
+    ax.set_title("Receiver Operating Characteristic (ROC) Curve")
+    ax.legend(loc="best")
+    fig.savefig(
+        os.path.join(path_save, fig_name),
+        bbox_inches="tight",
+    )
+    print(f"ℹ️ ROC curve saved to {os.path.join(path_save, fig_name)}")
+
+
 def find_last_conv_layer(module):
     """
     Helper to automatically find the last nn.Conv1d layer in your Net1D model.
