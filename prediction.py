@@ -41,6 +41,7 @@ from sklearn.metrics import auc, precision_recall_curve, roc_curve
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
+from plots import plot_roc_auc
 from sleeplib.config import Config
 
 # from pytorch_lightning.callbacks import modelcheckpoint
@@ -191,26 +192,9 @@ print(
 labels = AUC_df.fraction_of_yes.values.round(0).astype(int)
 preds = AUC_df.preds
 
-# * calculate ROC and ROC-AUC
-fpr, tpr, thresholds = roc_curve(labels, preds)
-roc_auc = auc(fpr, tpr)
-
-# plot ROC
-fig, ax = plt.subplots(figsize=(4, 4))
-ax.plot(fpr, tpr, label=f"ROC curve (AUC = {roc_auc:0.4f}")
-ax.plot([0, 1], [0, 1], linestyle="--")
-ax.set_xlim(0, 1)
-ax.set_ylim(0, 1)
-ax.set_xlabel("False Positive Rate")
-ax.set_ylabel("True Positive Rate")
-ax.set_title("Receiver Operating Characteristic (ROC) Curve")
-ax.legend()
+# * plot ROC
 roc_fname = "ROC-" + config.MODEL_CHECKPOINT + ".pdf"
-fig.savefig(
-    os.path.join(path_model, roc_fname),
-    bbox_inches="tight",
-)
-print(f"ℹ️ ROC curve saved to {os.path.join(path_model, roc_fname)}")
+plot_roc_auc(labels, preds, path_model, roc_fname, config=config)
 
 # * calculate precision-recall curve (PRC) and AUC
 precision, recall, thresholds = precision_recall_curve(labels, preds)
